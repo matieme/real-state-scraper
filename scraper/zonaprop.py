@@ -23,12 +23,12 @@ def parse_item(div):
     # Extracting features
     features_element = div.find('div', attrs={'data-qa': 'POSTING_CARD_FEATURES'})
     features = [x.text for x in features_element.find_all('span') if x.find("img")]
-    total_surface = features[0]
-    covered_surface = features[1]
-    rooms = features[2]
-    bedrooms = features[3]
-    bathrooms = features[4]
-    garages = features[5]
+    total_surface = features[0] if len(features) > 0 and features[0] else None
+    covered_surface = features[1] if len(features) > 1 and features[1] else None
+    rooms = features[2] if len(features) > 2 and features[2] else None
+    bedrooms = features[3]  if len(features) > 3 and features[3] else None
+    bathrooms = features[4] if len(features) > 4 and features[4] else None
+    garages = features[5] if len(features) > 5 and features[5] else None
 
     item = {
         "Referencia": href,
@@ -78,7 +78,7 @@ def extract_data(soup, page, page_link):
                 # print(item)
                 results.append(item)
         except Exception as e:
-            #print(e)
+            print(e)
             pass
 
     return pd.DataFrame(results)

@@ -7,6 +7,7 @@ import os
 from tqdm import tqdm
 import time
 from utils import filemerger
+from utils.property import Property
 
 
 def parse_item(div):
@@ -22,15 +23,24 @@ def parse_item(div):
     # Extracting features
     features_element = div.find('div', attrs={'data-qa': 'POSTING_CARD_FEATURES'})
     features = [x.text for x in features_element.find_all('span') if x.find("img")]
+    total_surface = features[0]
+    covered_surface = features[1]
+    rooms = features[2]
+    bedrooms = features[3]
+    bathrooms = features[4]
+    garages = features[5]
 
     item = {
-        "href": href,
-        "price": price,
-        "location": location,
+        "Referencia": href,
+        "Price": price,
+        "Location": location,
+        "Total Surface": total_surface,
+        "Covered Surface": covered_surface,
+        "Rooms": rooms,
+        "Bedrooms": bedrooms,
+        "Bathrooms": bathrooms,
+        "Garages": garages
     }
-
-    for i, feature in enumerate(features):
-        item[i] = feature
 
     return item
 
@@ -68,10 +78,11 @@ def extract_data(soup, page, page_link):
                 # print(item)
                 results.append(item)
         except Exception as e:
-            print(e)
+            #print(e)
             pass
 
     return pd.DataFrame(results)
+
 
 start_page = 2
 max_pages = 3

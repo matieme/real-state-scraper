@@ -26,7 +26,7 @@ def parse_item(div):
     total_surface = features[0] if len(features) > 0 and features[0] else None
     covered_surface = features[1] if len(features) > 1 and features[1] else None
     rooms = features[2] if len(features) > 2 and features[2] else None
-    bedrooms = features[3]  if len(features) > 3 and features[3] else None
+    bedrooms = features[3] if len(features) > 3 and features[3] else None
     bathrooms = features[4] if len(features) > 4 and features[4] else None
     garages = features[5] if len(features) > 5 and features[5] else None
 

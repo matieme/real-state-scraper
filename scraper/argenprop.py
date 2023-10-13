@@ -6,7 +6,6 @@ import pandas as pd
 import os
 from tqdm import tqdm
 import time
-from utils import filemerger
 from utils.property import Property
 
 
@@ -18,9 +17,11 @@ def parse_item(div):
     if card_price and not card_price.select_one('.card__noprice'):
         currency = card_price.select_one('.card__currency').text.strip()
         price_value = card_price.contents[2]
-        price = f"{currency} {price_value}"
+        price = f"{currency} {clean_data(price_value)}"
 
-    location = div.select_one('.card__address').get_text().strip()
+    # location = div.select_one('.card__address').get_text().strip()
+    location_container = div.select('.card__monetary-values')
+    location = location_container[0].contents[7].get_text()
 
     features = div.select('.card__main-features>li')
 
@@ -36,17 +37,17 @@ def parse_item(div):
         icon_class = feature.select_one('i')['class'][0]
 
         if icon_class == "icono-superficie_total":
-            total_surface = value
+            total_surface = clean_data(value)
         elif icon_class == "icono-superficie_cubierta":
-            covered_surface = value
+            covered_surface = clean_data(value)
         elif icon_class == "icono-cantidad_ambientes":
-            rooms = value
+            rooms = clean_data(value)
         elif icon_class == "icono-cantidad_dormitorios":
-            bedrooms = value
+            bedrooms = clean_data(value)
         elif icon_class == "icono-cantidad_banos":
-            bathrooms = value
+            bathrooms = clean_data(value)
         elif icon_class == "icono-ambiente_cochera":
-            garages = value
+            garages = clean_data(value)
 
     item = {
         "Referencia": url,
@@ -106,6 +107,10 @@ start_page = 2
 max_pages = 3
 
 
+def clean_data(data_str):
+    return data_str.replace("\n", "").strip()
+
+
 def run():
     with sync_playwright() as p:
         for current_page in tqdm(range(start_page, max_pages + 1)):
@@ -152,5 +157,3 @@ def run():
             browser.close()  # Close browser after processing each page
 
             time.sleep(2)  # Add a delay after closing the browser before opening a new one for the next URL
-
-        filemerger.merge_files()

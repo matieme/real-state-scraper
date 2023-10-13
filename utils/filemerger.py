@@ -6,7 +6,7 @@ folder_path = 'results/'
 
 def merge_files():
     all_files = [f for f in os.listdir(folder_path) if
-                 os.path.isfile(os.path.join(folder_path, f)) and f.startswith('scraped_page_')]
+                 os.path.isfile(os.path.join(folder_path, f)) and f.startswith('scraped_')]
     dfs = []  # List to store DataFrames
     for filename in all_files:
         filepath = os.path.join(folder_path, filename)

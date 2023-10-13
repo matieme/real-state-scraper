@@ -6,7 +6,6 @@ import pandas as pd
 import os
 from tqdm import tqdm
 import time
-from utils import filemerger
 from utils.property import Property
 
 
@@ -15,7 +14,6 @@ def parse_item(div):
 
     # Extracting price
     price = div.find('div', attrs={'data-qa': 'POSTING_CARD_PRICE'}).text
-    price = price.split('USD ')[1]
 
     # Extracting location
     location = div.find('div', attrs={'data-qa': 'POSTING_CARD_LOCATION'}).text
@@ -129,10 +127,8 @@ def run():
             soup = BeautifulSoup(html, 'lxml')
             df_page = extract_data(soup, page, page_link)
 
-            df_page.to_csv(f"results/scraped_page_{current_page}.csv", index=False)
+            df_page.to_csv(f"results/scraped_zonaprop_page_{current_page}.csv", index=False)
 
             browser.close()  # Close browser after processing each page
 
             time.sleep(2)  # Add a delay after closing the browser before opening a new one for the next URL
-
-        filemerger.merge_files()

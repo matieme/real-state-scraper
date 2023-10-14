@@ -14,6 +14,7 @@ def run_scraper():
     logger.info("Starting the argenprop scraper...")
     argenprop.run()
     logger.info("Finished the zonaprop scraper.")
+    logger.info("Merging the results...")
     filemerger.merge_files()
 
 

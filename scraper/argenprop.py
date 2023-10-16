@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 # Global constants
 START_PAGE = 2
-MAX_PAGES = 3
+MAX_PAGES = 10
 RETRIES = 3
 BASE_URL = "https://www.argenprop.com"
 

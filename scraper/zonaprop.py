@@ -6,7 +6,7 @@ import time
 
 # Global constants
 START_PAGE = 2
-MAX_PAGES = 3
+MAX_PAGES = 10
 RETRIES = 3
 BASE_URL = "www.zonaprop.com.ar"
 
@@ -65,31 +65,22 @@ def parse_item(div):
 
 
 def extract_data(soup, page, page_link):
-    # Find the first div with class="postings-container"
     container_div = soup.find('div', class_='postings-container')
 
-    # Find all divs within the container div
-    # divs = container_div.find_all('div')
-    retries = 3  # Define the number of retries
-    while container_div is None and retries > 0:
+    for _ in range(RETRIES):
+        if container_div:
+            break
         print("No postings-container found in the page. Retrying...")
-        time.sleep(5)  # Wait for 5 seconds
-
-        # Reload the page
+        time.sleep(5)
         page.goto(page_link)
-        html = page.content()
-        soup = BeautifulSoup(html, 'lxml')
+        soup = BeautifulSoup(page.content(), 'lxml')
         container_div = soup.find('div', class_='postings-container')
 
-        retries -= 1  # Decrement the retry count
-
-    if container_div is None:  # If still None after retries
+    if not container_div:
         print("Failed to find postings-container after retries.")
-        return pd.DataFrame()  # Return an empty DataFrame
+        return pd.DataFrame()
 
-    # List to store the extracted data
     results = []
-    # Iterate over the divs and extract the relevant information
     for i, div in enumerate(container_div.contents):
         try:
             if div:

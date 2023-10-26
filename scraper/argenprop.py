@@ -168,7 +168,7 @@ def run():
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
             )
 
-            page_link = f'https://www.argenprop.com/departamentos/venta/capital-federal/pagina-{current_page}.html'
+            page_link = f'https://www.argenprop.com/departamentos/venta/capital-federal/pagina-{current_page}'
             page, soup = open_new_page(page_link)
             df_page = extract_data(soup, page, page_link)
 

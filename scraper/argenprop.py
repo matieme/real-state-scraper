@@ -63,7 +63,12 @@ def parse_item(url, div, div_item):
         "Referencia": url,
         "Price": price,
         "Location": location,
-        **complete_data
+        "Total Surface": complete_data["Total Surface"] if complete_data.get("Total Surface") else complete_data["Covered Surface"],
+        "Covered Surface": complete_data["Covered Surface"] if complete_data.get("Covered Surface") else None,
+        "Rooms": complete_data["Rooms"] if complete_data.get("Rooms") else None,
+        "Bedrooms": complete_data["Bedrooms"] if complete_data.get("Bedrooms") else None,
+        "Bathrooms": complete_data["Bathrooms"] if complete_data.get("Bathrooms") else None,
+        "Garages": complete_data["Garages"] if complete_data.get("Garages") else None,
     }
 
     return item

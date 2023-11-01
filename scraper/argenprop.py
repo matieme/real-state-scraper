@@ -128,6 +128,7 @@ def extract_data(soup, page, page_link):
 def get_child_item_data(url):
     new_page_link_item = BASE_URL + url
     page_item, soup_item = open_new_page(new_page_link_item)
+    time.sleep(1)
     container_div_item = soup_item.find('div', class_='property-description')
     return container_div_item
 
@@ -176,4 +177,4 @@ def run():
 
             browser.close()  # Close browser after processing each page
 
-            time.sleep(2)  # Add a delay after closing the browser before opening a new one for the next URL
+            time.sleep(3)  # Add a delay after closing the browser before opening a new one for the next URL

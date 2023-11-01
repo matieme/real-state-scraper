@@ -72,35 +72,31 @@ def get_by_ids(ids):
 
 
 def parse_properties(data: dict):
-    attributes = data.get("attributes", [])
-    property_data = {}
+    attribute_mapping = {
+        "ROOMS": "Rooms",
+        "BEDROOMS": "Bedrooms",
+        "FULL_BATHROOMS": "Bathrooms",
+        "TOTAL_AREA": "Total Surface",
+        "COVERED_AREA": "Covered Surface",
+        "PARKING_LOTS": "Garages"
+    }
 
-    for attribute in attributes:
-        attr_id = attribute.get("id", "")
-        value = to_number(attribute.get("value_name", "0"))
-        if attr_id == "ROOMS":
-            property_data["Rooms"] = value
-        elif attr_id == "BEDROOMS":
-            property_data["Bedrooms"] = value
-        elif attr_id == "FULL_BATHROOMS":
-            property_data["Bathrooms"] = value
-        elif attr_id == "TOTAL_AREA":
-            property_data["Total Surface"] = value
-        elif attr_id == "COVERED_AREA":
-            property_data["Covered Surface"] = value
-        elif attr_id == "PARKING_LOTS":
-            property_data["Garages"] = value
+    property_data = {
+        attribute_mapping.get(attribute.get("id", ""), None): to_number(attribute.get("value_name", "0"))
+        for attribute in data.get("attributes", [])
+        if attribute.get("id", "") in attribute_mapping
+    }
 
     item = {
         "Referencia": data.get("permalink", ""),
         "Price": int(data.get("price", 0)),
         "Location": data.get("location", {}).get("neighborhood", {}).get("name", "").upper(),
-        "Total Surface": property_data["Covered Surface"] if property_data.get("Covered Surface") else None,
-        "Covered Surface": property_data["Covered Surface"] if property_data.get("Covered Surface") else None,
-        "Rooms": property_data["Rooms"] if property_data.get("Rooms") else None,
-        "Bedrooms": property_data["Bedrooms"] if property_data.get("Bedrooms") else None,
-        "Bathrooms": property_data["Bathrooms"] if property_data.get("Bathrooms") else None,
-        "Garages": property_data["Garages"] if property_data.get("Garages") else None,
+        "Total Surface": property_data.get("Total Surface", None),
+        "Covered Surface": property_data.get("Covered Surface", None),
+        "Rooms": property_data.get("Rooms", None),
+        "Bedrooms": property_data.get("Bedrooms", None),
+        "Bathrooms": property_data.get("Bathrooms", None),
+        "Garages": property_data.get("Garages", None),
     }
 
     return item

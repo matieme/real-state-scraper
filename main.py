@@ -1,6 +1,6 @@
 ﻿import logging
 import time
-from scraper import zonaprop , argenprop, mercadolibre
+from scraper import zonaprop, argenprop, mercadolibre
 from utils import filemerger
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

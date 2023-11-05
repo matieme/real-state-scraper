@@ -115,7 +115,7 @@ def extract_data(ids_response):
 
 def run():
     start_time = time.time()
-    base_url = f"{BASE_URL}/sites/MLA/search?category=MLA1473"
+    base_url = f"{BASE_URL}/sites/MLA/search?category=MLA401686"
     urls = [f"{base_url}&q={neighborhood}+capital+federal" for neighborhood in NEIGHBORHOODS_CABA]
 
     ids = get_ids(urls)

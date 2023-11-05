@@ -5,31 +5,16 @@ import time
 import re
 from tqdm import tqdm
 from utils.property import Property
+from utils.constants import Constants
+from utils.configloader import load_config
 
 # Global constants
 START_PAGE = 2
 MAX_PAGES = 10
 RETRIES = 3
-BASE_URL = "https://www.argenprop.com"
-
-HEADERS = {
-    'authority': 'www.argenprop.com',
-    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-    'accept-language': 'en-US,en;q=0.9,es-US;q=0.8,es;q=0.7',
-    'cache-control': 'max-age=0',
-    'cookie': '_gcl_au=1.1.915058023.1696996656; __rtbh.lid=%7B%22eventType%22%3A%22lid%22%2C%22id%22%3A%22jlgty5cYVRTfRmf7QASw%22%7D; _gid=GA1.3.909566837.1696996656; sessionId=719d2a39-3b0c-4003-8780-fd99339b799b; __rtbh.uid=%7B%22eventType%22%3A%22uid%22%7D; _fbp=fb.2.1696996656597.2087731844; _hjSessionUser_194887=eyJpZCI6ImM4ODc0NjhlLTdmNmQtNTE0Yi1iNmU4LWQzYTYyMWJiYzlkOCIsImNyZWF0ZWQiOjE2OTY5OTY2NTY4MTMsImV4aXN0aW5nIjp0cnVlfQ==; __cf_bm=ZKDgzS1o3fx68DUge6PTgHPu7W42Z9NZzLZYCo9g_SA-1697064859-0-AbMXnhffFxiKcMKE6zQeZuA86b7uKrq7JujXDFrYGLBd9SODuOWmiQx2UCaN2QlwUMNETHmIJ1tZ1eX+fbT0Go60I5FMC5aLzOihKV/ED2mS; _dc_gtm_UA-5217585-1=1; cf_clearance=6NEqR9IScjs6l2qXwhqj7A_wuD6aRMQklUcebxGwg5Y-1697064860-0-1-5a96a806.f237fc96.d300f59c-160.2.1697064860; __gads=ID=ee8269041c5e1324:T=1696996656:RT=1697064860:S=ALNI_MZb-zqUx8CHbjVpcEZg2AU8mPWB5Q; __gpi=UID=00000a17b9f09a29:T=1696996656:RT=1697064860:S=ALNI_MZL2WqEfjo5_Gir3Mtb2pe5R20Ntw; _hjIncludedInSessionSample_194887=0; _hjSession_194887=eyJpZCI6ImQyMmUyMWE5LTZiYzUtNDhmMy1iNmFhLTg0OGVkODJmZGIwMiIsImNyZWF0ZWQiOjE2OTcwNjQ4NTg0NjcsImluU2FtcGxlIjpmYWxzZSwic2Vzc2lvbml6ZXJCZXRhRW5hYmxlZCI6ZmFsc2V9; _hjAbsoluteSessionInProgress=1; _ga=GA1.3.392380778.1696996656; _ga_68T3PL08E4=GS1.1.1697064858.3.0.1697064859.59.0.0; JSESSIONID=4B7A8D2F1B38493306CF41E2B3CE4342',
-    'sec-ch-ua': '"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'sec-fetch-dest': 'document',
-    'sec-fetch-mode': 'navigate',
-    'sec-fetch-site': 'none',
-    'sec-fetch-user': '?1',
-    'upgrade-insecure-requests': '1',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
-}
 
 context = None
+config = None
 
 
 def parse_item(url, div, div_item):
@@ -54,13 +39,14 @@ def parse_item(url, div, div_item):
     feature_data = extract_feature_data(features)
     complete_data = extract_item_feature_data(item_features, feature_data)
 
-    item_test= Property(
+    item_test = Property(
         url,
         price,
         expenses,
         location,
         exact_direction,
-        complete_data[Constants.TOTAL_SURFACE] if complete_data.get(Constants.TOTAL_SURFACE) else complete_data[Constants.COVERED_SURFACE],
+        complete_data[Constants.TOTAL_SURFACE] if complete_data.get(Constants.TOTAL_SURFACE) else complete_data[
+            Constants.COVERED_SURFACE],
         complete_data.get(Constants.COVERED_SURFACE),
         complete_data.get(Constants.ROOMS),
         complete_data.get(Constants.BEDROOMS),
@@ -88,7 +74,8 @@ def extract_item_feature_data(item_features, existing_data):
     for item_feature in item_features:
         value = item_feature.get_text()
         title_class = item_feature.select_one('i')['class'][0]
-        if title_class in Constants.ARGENPROP_FEATURE_MAPPING and not existing_data.get(Constants.ARGENPROP_FEATURE_MAPPING[title_class]):
+        if title_class in Constants.ARGENPROP_FEATURE_MAPPING and not existing_data.get(
+                Constants.ARGENPROP_FEATURE_MAPPING[title_class]):
             existing_data[Constants.ARGENPROP_FEATURE_MAPPING[title_class]] = clean_item_data(value)
     return existing_data
 
@@ -125,7 +112,7 @@ def extract_data(soup, page, page_link):
 
 
 def get_child_item_data(url):
-    new_page_link_item = BASE_URL + url
+    new_page_link_item = config["BASE_URL"] + url
     page_item, soup_item = open_new_page(new_page_link_item)
     time.sleep(1)
     container_div_item = soup_item.find('div', class_='property-description')
@@ -145,7 +132,7 @@ def open_new_page(page_link):
     global context
     page = context.new_page()
 
-    page.set_extra_http_headers(HEADERS)
+    page.set_extra_http_headers(config["HEADERS"])
 
     print(page_link)
 
@@ -160,15 +147,16 @@ def open_new_page(page_link):
 
 def run():
     global context
+    global config
+
+    config = load_config("scraper/configs/argenprop-config.json")
     with sync_playwright() as p:
         for current_page in tqdm(range(START_PAGE, MAX_PAGES + 1)):
             browser = p.chromium.launch(headless=False)
 
-            context = browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-            )
+            context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
 
-            page_link = f'{BASE_URL}/departamentos/venta/capital-federal/pagina-{current_page}'
+            page_link = f'{config["BASE_URL"]}/departamentos/venta/capital-federal/pagina-{current_page}'
             page, soup = open_new_page(page_link)
             df_page = extract_data(soup, page, page_link)
 

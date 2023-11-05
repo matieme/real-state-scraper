@@ -4,6 +4,7 @@ import pandas as pd
 import time
 import re
 from tqdm import tqdm
+from utils.property import Property
 
 # Global constants
 START_PAGE = 2
@@ -34,7 +35,10 @@ FEATURE_MAPPING = {
     "icono-cantidad_ambientes": "Rooms",
     "icono-cantidad_dormitorios": "Bedrooms",
     "icono-cantidad_banos": "Bathrooms",
-    "icono-ambiente_cochera": "Garages"
+    "icono-ambiente_cochera": "Garages",
+    "icono-antiguedad": "Antiguedad",
+    "icono-disposicion": "Disposicion",
+    "icono-orientacion": "Orientacion",
 }
 
 context = None
@@ -54,24 +58,32 @@ def parse_item(url, div, div_item):
 
     features = div.select('.card__main-features>li')
 
+    exact_direction = clean_data(location_container[0].contents[3].get_text())
+    expenses = clean_item_data(div.select_one('span.card__expenses').get_text())
+
     item_features = div_item.select('.property-main-features>li')
 
     feature_data = extract_feature_data(features)
     complete_data = extract_item_feature_data(item_features, feature_data)
 
-    item = {
-        "Referencia": url,
-        "Price": price,
-        "Location": location,
-        "Total Surface": complete_data["Total Surface"] if complete_data.get("Total Surface") else complete_data["Covered Surface"],
-        "Covered Surface": complete_data["Covered Surface"] if complete_data.get("Covered Surface") else None,
-        "Rooms": complete_data["Rooms"] if complete_data.get("Rooms") else None,
-        "Bedrooms": complete_data["Bedrooms"] if complete_data.get("Bedrooms") else None,
-        "Bathrooms": complete_data["Bathrooms"] if complete_data.get("Bathrooms") else None,
-        "Garages": complete_data["Garages"] if complete_data.get("Garages") else None,
-    }
+    item_test= Property(
+        url,
+        price,
+        expenses,
+        location,
+        exact_direction,
+        complete_data["Total Surface"] if complete_data.get("Total Surface") else complete_data["Covered Surface"],
+        complete_data.get("Covered Surface"),
+        complete_data.get("Rooms"),
+        complete_data.get("Bedrooms"),
+        complete_data.get("Bathrooms"),
+        complete_data.get("Garages"),
+        complete_data.get("Antiguedad"),
+        complete_data.get("Disposicion"),
+        complete_data.get("Orientacion")
+    )
 
-    return item
+    return item_test.to_dict()
 
 
 def extract_feature_data(features):

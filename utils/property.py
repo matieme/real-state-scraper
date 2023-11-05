@@ -1,5 +1,10 @@
-﻿class Property:
-    def __init__(self, url="", price=None, expenses=None, location=None, exact_direction=None, total_surface=None, covered_surface=None, rooms=None, bedrooms=None, bathrooms=None, garages=None, age=None, layout=None, orientation=None):
+﻿from utils.constants import Constants
+
+
+class Property:
+    def __init__(self, url="", price=None, expenses=None, location=None, exact_direction=None, total_surface=None,
+                 covered_surface=None, rooms=None, bedrooms=None, bathrooms=None, garages=None, age=None, layout=None,
+                 orientation=None):
         self.reference = url
         self.price = price
         self.expenses = expenses
@@ -17,18 +22,18 @@
 
     def to_dict(self):
         return {
-            "Referencia": self.reference,
-            "Price": self.price,
-            "Expenses": self.expenses,
-            "Location": self.location,
-            "Exact Direction": self.exact_direction,
-            "Total Surface": self.total_surface,
-            "Covered Surface": self.covered_surface,
-            "Rooms": self.rooms,
-            "Bedrooms": self.bedrooms,
-            "Bathrooms": self.bathrooms,
-            "Garages": self.garages,
-            "Antiguedad": self.age,
-            "Disposicion": self.layout,
-            "Orientacion": self.orientation,
+            Constants.ID: self.reference,
+            Constants.PRICE: self.price,
+            Constants.EXPENSES: self.expenses,
+            Constants.LOCATION: self.location,
+            Constants.EXACT_LOCATION: self.exact_direction,
+            Constants.TOTAL_SURFACE: self.total_surface,
+            Constants.COVERED_SURFACE: self.covered_surface,
+            Constants.ROOMS: self.rooms,
+            Constants.BEDROOMS: self.bedrooms,
+            Constants.BATHROOMS: self.bathrooms,
+            Constants.GARAGES: self.garages,
+            Constants.AGE: self.age,
+            Constants.LAYOUT: self.layout,
+            Constants.ORIENTATION: self.orientation,
         }

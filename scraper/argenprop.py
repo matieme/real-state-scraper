@@ -29,18 +29,6 @@ HEADERS = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
 }
 
-FEATURE_MAPPING = {
-    "icono-superficie_total": "Total Surface",
-    "icono-superficie_cubierta": "Covered Surface",
-    "icono-cantidad_ambientes": "Rooms",
-    "icono-cantidad_dormitorios": "Bedrooms",
-    "icono-cantidad_banos": "Bathrooms",
-    "icono-ambiente_cochera": "Garages",
-    "icono-antiguedad": "Antiguedad",
-    "icono-disposicion": "Disposicion",
-    "icono-orientacion": "Orientacion",
-}
-
 context = None
 
 
@@ -72,15 +60,15 @@ def parse_item(url, div, div_item):
         expenses,
         location,
         exact_direction,
-        complete_data["Total Surface"] if complete_data.get("Total Surface") else complete_data["Covered Surface"],
-        complete_data.get("Covered Surface"),
-        complete_data.get("Rooms"),
-        complete_data.get("Bedrooms"),
-        complete_data.get("Bathrooms"),
-        complete_data.get("Garages"),
-        complete_data.get("Antiguedad"),
-        complete_data.get("Disposicion"),
-        complete_data.get("Orientacion")
+        complete_data[Constants.TOTAL_SURFACE] if complete_data.get(Constants.TOTAL_SURFACE) else complete_data[Constants.COVERED_SURFACE],
+        complete_data.get(Constants.COVERED_SURFACE),
+        complete_data.get(Constants.ROOMS),
+        complete_data.get(Constants.BEDROOMS),
+        complete_data.get(Constants.BATHROOMS),
+        complete_data.get(Constants.GARAGES),
+        complete_data.get(Constants.AGE),
+        complete_data.get(Constants.LAYOUT),
+        complete_data.get(Constants.ORIENTATION),
     )
 
     return item_test.to_dict()
@@ -91,8 +79,8 @@ def extract_feature_data(features):
     for feature in features:
         value = feature.get_text()
         icon_class = feature.select_one('i')['class'][0]
-        if icon_class in FEATURE_MAPPING:
-            extracted_data[FEATURE_MAPPING[icon_class]] = clean_data(value)
+        if icon_class in Constants.ARGENPROP_FEATURE_MAPPING:
+            extracted_data[Constants.ARGENPROP_FEATURE_MAPPING[icon_class]] = clean_data(value)
     return extracted_data
 
 
@@ -100,8 +88,8 @@ def extract_item_feature_data(item_features, existing_data):
     for item_feature in item_features:
         value = item_feature.get_text()
         title_class = item_feature.select_one('i')['class'][0]
-        if title_class in FEATURE_MAPPING and not existing_data.get(FEATURE_MAPPING[title_class]):
-            existing_data[FEATURE_MAPPING[title_class]] = clean_item_data(value)
+        if title_class in Constants.ARGENPROP_FEATURE_MAPPING and not existing_data.get(Constants.ARGENPROP_FEATURE_MAPPING[title_class]):
+            existing_data[Constants.ARGENPROP_FEATURE_MAPPING[title_class]] = clean_item_data(value)
     return existing_data
 
 
@@ -128,7 +116,6 @@ def extract_data(soup, page, page_link):
             if tag:
                 url = tag.find('a')['href']
                 item = parse_item(url, tag, get_child_item_data(url))
-                # print(item)
                 results.append(item)
         except Exception as e:
             print(e)
@@ -181,7 +168,7 @@ def run():
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
             )
 
-            page_link = f'https://www.argenprop.com/departamentos/venta/capital-federal/pagina-{current_page}'
+            page_link = f'{BASE_URL}/departamentos/venta/capital-federal/pagina-{current_page}'
             page, soup = open_new_page(page_link)
             df_page = extract_data(soup, page, page_link)
 

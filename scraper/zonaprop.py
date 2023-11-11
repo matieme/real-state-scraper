@@ -9,6 +9,7 @@ from utils.constants import Constants
 from utils.configloader import load_config
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+import re
 
 # Global constants
 START_PAGE = 2
@@ -20,11 +21,18 @@ context = None
 
 def parse_item(url, div):
     container = div.select('.clearfix')
-    price = container[2].select_one('.price-value').text.strip()
+    price = extract_text_and_remove(container[2].select_one('.price-value').text.strip(), 'USD')
     expenses_element = container[2].select_one('.price-expenses')
-    expenses = expenses_element.text.strip() if expenses_element else None
-    location = container[2].select_one('.section-location-property').text.strip()
-    exact_location = container[2].select_one('.section-location-property').text.strip()
+    if expenses_element is None:
+        expenses = None
+    else:
+        expenses = extract_currency_amount(expenses_element.text.strip())
+
+    full_location = container[2].select_one('.section-location-property').text.strip()
+    parts = full_location.split(',', 1)
+
+    exact_location = parts[0].strip() if parts else None
+    location = parts[1].strip() if len(parts) > 1 else None
 
     features = div.select('.section-icon-features-property>li')
 
@@ -56,12 +64,29 @@ def extract_feature_data(features):
         value = feature.get_text()
         icon_class = feature.select_one('i')['class'][0]
         if icon_class in Constants.ZONAPROP_FEATURE_MAPPING:
-            extracted_data[Constants.ZONAPROP_FEATURE_MAPPING[icon_class]] = clean_data(value)
+            extracted_data[Constants.ZONAPROP_FEATURE_MAPPING[icon_class]] = extract_numbers(clean_data(value))
     return extracted_data
+
+
+def extract_text_and_remove(text, text_to_remove):
+    parts = [part.strip() for part in text.split('\n') if part.strip() and text_to_remove in part]
+    return parts[0] if parts else text
 
 
 def clean_data(data_str):
     return data_str.replace("\n", "").strip()
+
+
+def extract_numbers(text):
+    if text is None:
+        return None
+    match = re.search(r'\d+', text)
+    return int(match.group()) if match else text
+
+
+def extract_currency_amount(text):
+    currency_amounts = re.findall(r'\$\s*\d+(?:\.\d+)?', text)
+    return currency_amounts[0] if currency_amounts else None
 
 
 def extract_data(soup, page, page_link):
@@ -170,7 +195,7 @@ def run():
             page, soup = open_new_page(page_link)
             df_page = extract_data(soup, page, page_link)
 
-            df_page.to_csv(f"results/scraped_zonaprop_page_test_{current_page}.csv", index=False)
+            df_page.to_csv(f"results/scraped_zonaprop_page_{current_page}.csv", index=False)
 
             browser.close()  # Close browser after processing each page
 

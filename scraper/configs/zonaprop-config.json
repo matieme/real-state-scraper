@@ -1,0 +1,19 @@
+﻿{
+  "BASE_URL": "https://www.zonaprop.com.ar",
+  "HEADERS":{
+    "authority":"www.zonaprop.com.ar",
+    "accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "accept-language":"en-US,en;q=0.9,es-US;q=0.8,es;q=0.7",
+    "cache-control":"max-age=0",
+    "cookie":"_gcl_au=1.1.915058023.1696996656; __rtbh.lid=%7B%22eventType%22%3A%22lid%22%2C%22id%22%3A%22jlgty5cYVRTfRmf7QASw%22%7D; sessionId=719d2a39-3b0c-4003-8780-fd99339b799b; __rtbh.uid=%7B%22eventType%22%3A%22uid%22%7D; _fbp=fb.2.1696996656597.2087731844; _hjSessionUser_194887=eyJpZCI6ImM4ODc0NjhlLTdmNmQtNTE0Yi1iNmU4LWQzYTYyMWJiYzlkOCIsImNyZWF0ZWQiOjE2OTY5OTY2NTY4MTMsImV4aXN0aW5nIjp0cnVlfQ==; _gid=GA1.3.1501021728.1699050693; cf_clearance=Cj2un6b7W0mx5QX6ODdqI61ROSEL4YR9czFqndyMj.M-1699050694-0-1-6683032b.b7d4b548.96e3bc42-160.2.1699050694; _hjIncludedInSessionSample_194887=0; _hjSession_194887=eyJpZCI6ImU2MzQ0MzY2LWEyZDYtNDQ1ZS1iMmE5LTc2ZWFiMzc0NDVhYiIsImNyZWF0ZWQiOjE2OTkwNTA2OTQ0MjEsImluU2FtcGxlIjpmYWxzZSwic2Vzc2lvbml6ZXJCZXRhRW5hYmxlZCI6dHJ1ZX0=; _hjAbsoluteSessionInProgress=1; __cf_bm=zYeCCY97i5jisu7rGgvyyORNV_XeiqFulB6VhR1DW20-1699053831-0-AUvMHfKx8wyFSrAKz46GIPrmDcc4t0s0DKSovjJJnlu0JJ5HTV5ezzKVcc64fBwMkc95Qt00P09bJzN4Q3l9222C5X8ns8JpxYAcEMqnE7y4; __gads=ID=ee8269041c5e1324:T=1696996656:RT=1699053831:S=ALNI_MZb-zqUx8CHbjVpcEZg2AU8mPWB5Q; __gpi=UID=00000a17b9f09a29:T=1696996656:RT=1699053831:S=ALNI_MZL2WqEfjo5_Gir3Mtb2pe5R20Ntw; JSESSIONID=25CF12A8912C4777C0B8E76E23A349F1; _ga_68T3PL08E4=GS1.1.1699053831.17.1.1699053995.59.0.0; _ga=GA1.3.392380778.1696996656; _gat_UA-5217585-1=1",
+    "sec-ch-ua":"\"Google Chrome\";v=\"117\", \"Not;A=Brand\";v=\"8\", \"Chromium\";v=\"117\"",
+    "sec-ch-ua-mobile":"?0",
+    "sec-ch-ua-platform":"\"Windows\"",
+    "sec-fetch-dest":"document",
+    "sec-fetch-mode":"navigate",
+    "sec-fetch-site":"none",
+    "sec-fetch-user":"?1",
+    "upgrade-insecure-requests":"1",
+    "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+  }
+}

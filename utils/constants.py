@@ -25,3 +25,15 @@
         "icono-disposicion": "Disposicion",
         "icono-orientacion": "Orientacion",
     }
+
+    ZONAPROP_FEATURE_MAPPING = {
+        "icon-stotal": "Total Surface",
+        "icon-scubierta": "Covered Surface",
+        "icon-ambiente": "Rooms",
+        "icon-dormitorio": "Bedrooms",
+        "icon-bano": "Bathrooms",
+        "icon-cochera": "Garages",
+        "icon-antiguedad": "Antiguedad",
+        "icon-disposicion": "Disposicion",
+        "icon-orientacion": "Orientacion",
+    }

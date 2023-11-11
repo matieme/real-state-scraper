@@ -39,7 +39,7 @@ def parse_item(url, div, div_item):
     feature_data = extract_feature_data(features)
     complete_data = extract_item_feature_data(item_features, feature_data)
 
-    item_test = Property(
+    item = Property(
         url,
         price,
         expenses,
@@ -57,7 +57,7 @@ def parse_item(url, div, div_item):
         complete_data.get(Constants.ORIENTATION),
     )
 
-    return item_test.to_dict()
+    return item.to_dict()
 
 
 def extract_feature_data(features):

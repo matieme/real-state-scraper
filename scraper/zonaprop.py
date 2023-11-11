@@ -1,67 +1,67 @@
 ﻿from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
 import pandas as pd
 from tqdm import tqdm
 import time
+from utils.property import Property
+from utils.constants import Constants
+from utils.configloader import load_config
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 # Global constants
 START_PAGE = 2
 MAX_PAGES = 10
 RETRIES = 3
-BASE_URL = "www.zonaprop.com.ar"
-
-HEADERS = {
-    'authority': 'www.zonaprop.com.ar',
-    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-    'accept-language': 'en-US,en;q=0.9,es-US;q=0.8,es;q=0.7',
-    'cache-control': 'max-age=0',
-    'cookie': '_gcl_au=1.1.915058023.1696996656; __rtbh.lid=%7B%22eventType%22%3A%22lid%22%2C%22id%22%3A%22jlgty5cYVRTfRmf7QASw%22%7D; sessionId=719d2a39-3b0c-4003-8780-fd99339b799b; __rtbh.uid=%7B%22eventType%22%3A%22uid%22%7D; _fbp=fb.2.1696996656597.2087731844; _hjSessionUser_194887=eyJpZCI6ImM4ODc0NjhlLTdmNmQtNTE0Yi1iNmU4LWQzYTYyMWJiYzlkOCIsImNyZWF0ZWQiOjE2OTY5OTY2NTY4MTMsImV4aXN0aW5nIjp0cnVlfQ==; __cf_bm=OZ6ufJsMkxkuMAFLlrE9oT02YtKcNxABcP6HOxPrmgg-1697238054-0-ATedCiDMGh6TmhS5NkEoHwx+r27IOrLp0d1rOsHrPTsqQLAiApgVn8CJZTDeur2GVNa9dXiOjfE/q8P4j088l1Wy7Gsc/r1yfqn1PV0J9ERw; cf_clearance=mjz7bP3BLQtHQkKVc9iugIGzRstWW_U2scjf4zvc5lI-1697238064-0-1-27c0c582.189fedc2.39a8e4c8-160.2.1697238064; _gid=GA1.3.864520911.1697238062; __gads=ID=ee8269041c5e1324:T=1696996656:RT=1697238064:S=ALNI_MZb-zqUx8CHbjVpcEZg2AU8mPWB5Q; __gpi=UID=00000a17b9f09a29:T=1696996656:RT=1697238064:S=ALNI_MZL2WqEfjo5_Gir3Mtb2pe5R20Ntw; JSESSIONID=9A28797E85CEF81B28FB25A2CA17E39A; _ga_68T3PL08E4=GS1.1.1697238063.6.0.1697238063.60.0.0; _ga=GA1.1.392380778.1696996656; _hjIncludedInSessionSample_194887=0; _hjSession_194887=eyJpZCI6IjEyNTFkMWY1LWNhNTUtNGJjYS05MTJjLWIyMTFhMDFlYTg2NCIsImNyZWF0ZWQiOjE2OTcyMzgwNjMxOTAsImluU2FtcGxlIjpmYWxzZSwic2Vzc2lvbml6ZXJCZXRhRW5hYmxlZCI6ZmFsc2V9; _hjAbsoluteSessionInProgress=1',
-    'sec-ch-ua': '"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"Windows"',
-    'sec-fetch-dest': 'document',
-    'sec-fetch-mode': 'navigate',
-    'sec-fetch-site': 'none',
-    'sec-fetch-user': '?1',
-    'upgrade-insecure-requests': '1',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
-}
 
 context = None
 
 
-def parse_item(div):
-    href = div.find('div', attrs={'data-qa': 'posting PROPERTY'}).get("data-to-posting")
+def parse_item(url, div):
+    container = div.select('.clearfix')
+    price = container[2].select_one('.price-value').text.strip()
+    expenses_element = container[2].select_one('.price-expenses')
+    expenses = expenses_element.text.strip() if expenses_element else None
+    location = container[2].select_one('.section-location-property').text.strip()
+    exact_location = container[2].select_one('.section-location-property').text.strip()
 
-    # Extracting price
-    price = div.find('div', attrs={'data-qa': 'POSTING_CARD_PRICE'}).text
+    features = div.select('.section-icon-features-property>li')
 
-    # Extracting location
-    location = div.find('div', attrs={'data-qa': 'POSTING_CARD_LOCATION'}).text
+    feature_data = extract_feature_data(features)
 
-    # Extracting features
-    features_element = div.find('div', attrs={'data-qa': 'POSTING_CARD_FEATURES'})
-    features = [x.text for x in features_element.find_all('span') if x.find("img")]
-    total_surface = features[0] if len(features) > 0 and features[0] else None
-    covered_surface = features[1] if len(features) > 1 and features[1] else None
-    rooms = features[2] if len(features) > 2 and features[2] else None
-    bedrooms = features[3] if len(features) > 3 and features[3] else None
-    bathrooms = features[4] if len(features) > 4 and features[4] else None
-    garages = features[5] if len(features) > 5 and features[5] else None
+    item = Property(
+        url,
+        price,
+        expenses,
+        location,
+        exact_location,
+        feature_data.get(Constants.TOTAL_SURFACE),
+        feature_data.get(Constants.COVERED_SURFACE),
+        feature_data.get(Constants.ROOMS),
+        feature_data.get(Constants.BEDROOMS),
+        feature_data.get(Constants.BATHROOMS),
+        feature_data.get(Constants.GARAGES),
+        feature_data.get(Constants.AGE),
+        feature_data.get(Constants.LAYOUT),
+        feature_data.get(Constants.ORIENTATION),
+    )
 
-    item = {
-        "Referencia": href,
-        "Price": price,
-        "Location": location,
-        "Total Surface": total_surface,
-        "Covered Surface": covered_surface,
-        "Rooms": rooms,
-        "Bedrooms": bedrooms,
-        "Bathrooms": bathrooms,
-        "Garages": garages
-    }
+    return item.to_dict()
 
-    return item
+
+def extract_feature_data(features):
+    extracted_data = {}
+    for feature in features:
+        value = feature.get_text()
+        icon_class = feature.select_one('i')['class'][0]
+        if icon_class in Constants.ZONAPROP_FEATURE_MAPPING:
+            extracted_data[Constants.ZONAPROP_FEATURE_MAPPING[icon_class]] = clean_data(value)
+    return extracted_data
+
+
+def clean_data(data_str):
+    return data_str.replace("\n", "").strip()
 
 
 def extract_data(soup, page, page_link):
@@ -81,24 +81,58 @@ def extract_data(soup, page, page_link):
         return pd.DataFrame()
 
     results = []
-    for i, div in enumerate(container_div.contents):
-        try:
+    with ThreadPoolExecutor() as executor:
+        futures = []
+        for i, div in enumerate(container_div.contents):
             if div:
-                item = parse_item(div)
-                # print(item)
-                results.append(item)
-        except Exception as e:
-            print(e)
-            pass
+                url = div.find('a')['href']
+                time.sleep(2)
+                future = executor.submit(run_async_in_thread, get_child_item_data, url)
+                futures.append((future, url))
+
+        for future, url in futures:
+            try:
+                item_container = future.result()
+                if item_container:
+                    print(url)
+                    item = parse_item(url, item_container)
+                    results.append(item)
+            except Exception as e:
+                print(e)
 
     return pd.DataFrame(results)
+
+
+async def get_child_item_data(url):
+    config = load_config("scraper/configs/zonaprop-config.json")
+    new_page_link_item = config["BASE_URL"] + url
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=False)
+        context = await browser.new_context(user_agent=config["HEADERS"]["user-agent"])
+
+        page = await context.new_page()
+        await page.set_extra_http_headers(config["HEADERS"])
+
+        try:
+            await page.goto(new_page_link_item)
+            html_content = await page.content()
+            soup_item = BeautifulSoup(html_content, 'lxml')
+
+            container_div_item = soup_item.find('div', class_='main-container-property')
+        except Exception as e:
+            print(f"Failed to load {new_page_link_item}: {e}")
+        finally:
+            await browser.close()
+
+        return container_div_item
 
 
 def open_new_page(page_link):
     global context
     page = context.new_page()
 
-    page.set_extra_http_headers(HEADERS)
+    page.set_extra_http_headers(config["HEADERS"])
 
     print(page_link)
 
@@ -111,22 +145,33 @@ def open_new_page(page_link):
     return page, soup
 
 
+def run_async_in_thread(async_func, *args):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    result = loop.run_until_complete(async_func(*args))
+    time.sleep(2)
+    loop.close()
+    return result
+
+
 def run():
     global context
+    global config
+
+    config = load_config("scraper/configs/zonaprop-config.json")
     with sync_playwright() as p:
         for current_page in tqdm(range(START_PAGE, MAX_PAGES + 1)):
             browser = p.chromium.launch(headless=False)
 
-            context = browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-            )
+            context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
 
-            page_link = f'https://www.zonaprop.com.ar/casas-venta-capital-federal-pagina-{current_page}.html'
+            page_link = f'{config["BASE_URL"]}/inmuebles-venta-capital-federal-pagina-{current_page}.html'
+            time.sleep(1)
             page, soup = open_new_page(page_link)
             df_page = extract_data(soup, page, page_link)
 
-            df_page.to_csv(f"results/scraped_zonaprop_page_{current_page}.csv", index=False)
+            df_page.to_csv(f"results/scraped_zonaprop_page_test_{current_page}.csv", index=False)
 
             browser.close()  # Close browser after processing each page
 
-            time.sleep(2)  # Add a delay after closing the browser before opening a new one for the next URL
+            time.sleep(3)  # Add a delay after closing the browser before opening a new one for the next URL

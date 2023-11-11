@@ -11,29 +11,29 @@
     BATHROOMS = "Bathrooms"
     GARAGES = "Garages"
     AGE = "Antiguedad"
-    LAYOUT ="Disposicion"
+    LAYOUT = "Disposicion"
     ORIENTATION = "Orientacion"
 
     ARGENPROP_FEATURE_MAPPING = {
-        "icono-superficie_total": "Total Surface",
-        "icono-superficie_cubierta": "Covered Surface",
-        "icono-cantidad_ambientes": "Rooms",
-        "icono-cantidad_dormitorios": "Bedrooms",
-        "icono-cantidad_banos": "Bathrooms",
-        "icono-ambiente_cochera": "Garages",
-        "icono-antiguedad": "Antiguedad",
-        "icono-disposicion": "Disposicion",
-        "icono-orientacion": "Orientacion",
+        "icono-superficie_total": TOTAL_SURFACE,
+        "icono-superficie_cubierta": COVERED_SURFACE,
+        "icono-cantidad_ambientes": ROOMS,
+        "icono-cantidad_dormitorios": BEDROOMS,
+        "icono-cantidad_banos": BATHROOMS,
+        "icono-ambiente_cochera": GARAGES,
+        "icono-antiguedad": AGE,
+        "icono-disposicion": LAYOUT,
+        "icono-orientacion": ORIENTATION,
     }
 
     ZONAPROP_FEATURE_MAPPING = {
-        "icon-stotal": "Total Surface",
-        "icon-scubierta": "Covered Surface",
-        "icon-ambiente": "Rooms",
-        "icon-dormitorio": "Bedrooms",
-        "icon-bano": "Bathrooms",
-        "icon-cochera": "Garages",
-        "icon-antiguedad": "Antiguedad",
-        "icon-disposicion": "Disposicion",
-        "icon-orientacion": "Orientacion",
+        "icon-stotal": TOTAL_SURFACE,
+        "icon-scubierta": COVERED_SURFACE,
+        "icon-ambiente": ROOMS,
+        "icon-dormitorio": BEDROOMS,
+        "icon-bano": BATHROOMS,
+        "icon-cochera": GARAGES,
+        "icon-antiguedad": AGE,
+        "icon-disposicion": LAYOUT,
+        "icon-orientacion": ORIENTATION,
     }

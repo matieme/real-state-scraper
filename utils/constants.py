@@ -37,3 +37,16 @@
         "icon-disposicion": LAYOUT,
         "icon-orientacion": ORIENTATION,
     }
+
+    MERCADOLIBRE_FEATURE_MAPPING = {
+        "MAINTENANCE_FEE": EXPENSES,
+        "TOTAL_AREA": TOTAL_SURFACE,
+        "COVERED_AREA": COVERED_SURFACE,
+        "ROOMS": ROOMS,
+        "BEDROOMS": BEDROOMS,
+        "FULL_BATHROOMS": BATHROOMS,
+        "PARKING_LOTS": GARAGES,
+        "PROPERTY_AGE": AGE,
+        "DISPOSITION": LAYOUT,
+        "FACING": ORIENTATION
+    }

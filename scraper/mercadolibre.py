@@ -3,6 +3,8 @@ import time
 import logging
 import re
 import pandas as pd
+from utils.property import Property
+from utils.constants import Constants
 
 BASE_URL = "https://api.mercadolibre.com"
 logger = logging.getLogger()
@@ -72,34 +74,36 @@ def get_by_ids(ids):
 
 
 def parse_properties(data: dict):
-    attribute_mapping = {
-        "ROOMS": "Rooms",
-        "BEDROOMS": "Bedrooms",
-        "FULL_BATHROOMS": "Bathrooms",
-        "TOTAL_AREA": "Total Surface",
-        "COVERED_AREA": "Covered Surface",
-        "PARKING_LOTS": "Garages"
-    }
-
     property_data = {
-        attribute_mapping.get(attribute.get("id", ""), None): to_number(attribute.get("value_name", "0"))
+        Constants.MERCADOLIBRE_FEATURE_MAPPING.get(attribute.get("id", ""), None): to_number(attribute.get("value_name", "0"))
         for attribute in data.get("attributes", [])
-        if attribute.get("id", "") in attribute_mapping
+        if attribute.get("id", "") in Constants.MERCADOLIBRE_FEATURE_MAPPING
     }
 
-    item = {
-        "Referencia": data.get("permalink", ""),
-        "Price": int(data.get("price", 0)),
-        "Location": data.get("location", {}).get("neighborhood", {}).get("name", "").upper(),
-        "Total Surface": property_data.get("Total Surface", None),
-        "Covered Surface": property_data.get("Covered Surface", None),
-        "Rooms": property_data.get("Rooms", None),
-        "Bedrooms": property_data.get("Bedrooms", None),
-        "Bathrooms": property_data.get("Bathrooms", None),
-        "Garages": property_data.get("Garages", None),
-    }
+    item = Property(
+        data.get("permalink", ""),
+        format_currency(int(data.get("price", 0))),
+        property_data.get(Constants.EXPENSES, None),
+        data.get("location", {}).get("neighborhood", {}).get("name", "") + ", " + data.get("location", {}).get("city", {}).get("name", ""),
+        data.get("location", {}).get("address_line", ""),
+        property_data.get(Constants.TOTAL_SURFACE, None),
+        property_data.get(Constants.COVERED_SURFACE, None),
+        property_data.get(Constants.ROOMS, None),
+        property_data.get(Constants.BEDROOMS, None),
+        property_data.get(Constants.BATHROOMS, None),
+        property_data.get(Constants.GARAGES, None),
+        property_data.get(Constants.AGE, None),
+        property_data.get(Constants.LAYOUT, None),
+        property_data.get(Constants.ORIENTATION, None),
+    )
 
     return item
+
+
+def format_currency(value):
+    value_str = str(value)
+    formatted_value = value_str[:-3] + '.' + value_str[-3:]
+    return "USD " + formatted_value
 
 
 def extract_data(ids_response):

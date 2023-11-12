@@ -32,11 +32,11 @@ def chunks(input_list: list, chunk_size: int):
     return [input_list[i:i + chunk_size] for i in range(0, len(input_list), chunk_size)]
 
 
-def to_number(str: str):
-    try:
-        return int(re.sub(r'[^0-9]', '', str))
-    except:
-        return 0
+def extract_numbers(text):
+    if text is None:
+        return None
+    match = re.search(r'\d+', text)
+    return int(match.group()) if match else text
 
 
 def get_ids(urls: list[str]):
@@ -75,7 +75,7 @@ def get_by_ids(ids):
 
 def parse_properties(data: dict):
     property_data = {
-        Constants.MERCADOLIBRE_FEATURE_MAPPING.get(attribute.get("id", ""), None): to_number(attribute.get("value_name", "0"))
+        Constants.MERCADOLIBRE_FEATURE_MAPPING.get(attribute.get("id", ""), None): extract_numbers(attribute.get("value_name", "0"))
         for attribute in data.get("attributes", [])
         if attribute.get("id", "") in Constants.MERCADOLIBRE_FEATURE_MAPPING
     }

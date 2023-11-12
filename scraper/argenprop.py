@@ -66,7 +66,7 @@ def extract_feature_data(features):
         value = feature.get_text()
         icon_class = feature.select_one('i')['class'][0]
         if icon_class in Constants.ARGENPROP_FEATURE_MAPPING:
-            extracted_data[Constants.ARGENPROP_FEATURE_MAPPING[icon_class]] = clean_data(value)
+            extracted_data[Constants.ARGENPROP_FEATURE_MAPPING[icon_class]] = extract_numbers(clean_data(value))
     return extracted_data
 
 
@@ -78,6 +78,13 @@ def extract_item_feature_data(item_features, existing_data):
                 Constants.ARGENPROP_FEATURE_MAPPING[title_class]):
             existing_data[Constants.ARGENPROP_FEATURE_MAPPING[title_class]] = clean_item_data(value)
     return existing_data
+
+
+def extract_numbers(text):
+    if text is None:
+        return None
+    match = re.search(r'\d+', text)
+    return int(match.group()) if match else text
 
 
 def extract_data(soup, page, page_link):

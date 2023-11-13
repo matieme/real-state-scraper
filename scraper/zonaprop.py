@@ -141,6 +141,7 @@ async def get_child_item_data(url):
 
         try:
             await page.goto(new_page_link_item)
+            time.sleep(1)
             html_content = await page.content()
             soup_item = BeautifulSoup(html_content, 'lxml')
 

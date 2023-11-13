@@ -97,7 +97,7 @@ def parse_properties(data: dict):
         property_data.get(Constants.ORIENTATION, None),
     )
 
-    return item
+    return item.to_dict()
 
 
 def format_currency(value):

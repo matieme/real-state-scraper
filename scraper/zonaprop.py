@@ -40,6 +40,7 @@ def parse_item(url, div):
 
     item = Property(
         url,
+        "ZONA PROPS",
         price,
         expenses,
         location,

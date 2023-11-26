@@ -2,10 +2,11 @@
 
 
 class Property:
-    def __init__(self, url="", price=None, expenses=None, location=None, exact_direction=None, total_surface=None,
+    def __init__(self, url="", reference=None, price=None, expenses=None, location=None, exact_direction=None, total_surface=None,
                  covered_surface=None, rooms=None, bedrooms=None, bathrooms=None, garages=None, age=None, layout=None,
                  orientation=None):
-        self.reference = url
+        self.id = url
+        self.reference = reference
         self.price = price
         self.expenses = expenses
         self.location = location
@@ -22,7 +23,8 @@ class Property:
 
     def to_dict(self):
         return {
-            Constants.ID: self.reference,
+            Constants.ID: self.id,
+            Constants.REFERENCE: self.reference,
             Constants.PRICE: self.price,
             Constants.EXPENSES: self.expenses,
             Constants.LOCATION: self.location,

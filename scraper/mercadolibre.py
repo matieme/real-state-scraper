@@ -82,6 +82,7 @@ def parse_properties(data: dict):
 
     item = Property(
         data.get("permalink", ""),
+        "MERCADO LIBRE",
         format_currency(int(data.get("price", 0))),
         property_data.get(Constants.EXPENSES, None),
         data.get("location", {}).get("neighborhood", {}).get("name", "") + ", " + data.get("location", {}).get("city", {}).get("name", ""),

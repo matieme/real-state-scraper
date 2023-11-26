@@ -1,5 +1,6 @@
 ﻿class Constants:
-    ID = "Referencia"
+    ID = "Id"
+    REFERENCE = "Reference"
     PRICE = "Price"
     EXPENSES = "Expenses"
     LOCATION = "Location"

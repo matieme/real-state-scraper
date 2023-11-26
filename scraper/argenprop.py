@@ -41,6 +41,7 @@ def parse_item(url, div, div_item):
 
     item = Property(
         url,
+        "ARGENPROP",
         price,
         expenses,
         location,

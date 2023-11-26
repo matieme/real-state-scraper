@@ -10,6 +10,9 @@ from utils.configloader import load_config
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import re
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
 
 # Global constants
 START_PAGE = 2
@@ -96,14 +99,14 @@ def extract_data(soup, page, page_link):
     for _ in range(RETRIES):
         if container_div:
             break
-        print("No postings-container found in the page. Retrying...")
+        logger.warning("No postings-container found in the page. Retrying...")
         time.sleep(5)
         page.goto(page_link)
         soup = BeautifulSoup(page.content(), 'lxml')
         container_div = soup.find('div', class_='postings-container')
 
     if not container_div:
-        print("Failed to find postings-container after retries.")
+        logger.warning("Failed to find postings-container after retries.")
         return pd.DataFrame()
 
     results = []
@@ -120,11 +123,11 @@ def extract_data(soup, page, page_link):
             try:
                 item_container = future.result()
                 if item_container:
-                    print(url)
+                    logger.info(url)
                     item = parse_item(url, item_container)
                     results.append(item)
             except Exception as e:
-                print(e)
+                logger.error(e)
 
     return pd.DataFrame(results)
 
@@ -148,7 +151,7 @@ async def get_child_item_data(url):
 
             container_div_item = soup_item.find('div', class_='main-container-property')
         except Exception as e:
-            print(f"Failed to load {new_page_link_item}: {e}")
+            logger.error(f"Failed to load {new_page_link_item}: {e}")
         finally:
             await browser.close()
 

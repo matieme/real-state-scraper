@@ -9,8 +9,10 @@ from utils.constants import Constants
 from utils.configloader import load_config
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from utils.dataformatter import DataFormatter
 import re
 import logging
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
@@ -24,14 +26,17 @@ context = None
 
 def parse_item(url, div):
     container = div.select('.clearfix')
-    price = extract_text_and_remove(container[2].select_one('.price-value').text.strip(), 'USD')
+    price_dirty = extract_text_and_remove(container[2].select_one('.price-value').text.strip(), 'USD')
+    price_currency, price = DataFormatter.clean_price_and_currency(price_dirty)
     expenses_element = container[2].select_one('.price-expenses')
     if expenses_element is None:
-        expenses = None
+        expenses_currency = None
+        expenses = 0
     else:
-        expenses = extract_currency_amount(expenses_element.text.strip())
+        expenses_currency, expenses = DataFormatter.clean_price_and_currency(
+            extract_currency_amount(expenses_element.text.strip()))
 
-    full_location = container[2].select_one('.section-location-property').text.strip()
+    full_location = container[2].select_one('.section-location-property').text.strip().lower()
     parts = full_location.split(',', 1)
 
     exact_location = parts[0].strip() if parts else None
@@ -41,19 +46,33 @@ def parse_item(url, div):
 
     feature_data = extract_feature_data(features)
 
+    total_surface = feature_data.get(Constants.TOTAL_SURFACE)
+
+    sqr_price = price / total_surface
+    sqr_price = round(sqr_price, 2)
+
+    covered_surface = feature_data.get(Constants.COVERED_SURFACE) if feature_data.get(Constants.COVERED_SURFACE) else feature_data.get(Constants.TOTAL_SURFACE)
+    rooms = feature_data.get(Constants.ROOMS) if feature_data.get(Constants.ROOMS) is not None else 0
+    bedrooms = feature_data.get(Constants.BEDROOMS) if feature_data.get(Constants.BEDROOMS) is not None else 0
+    bathrooms = feature_data.get(Constants.BATHROOMS) if feature_data.get(Constants.BATHROOMS) is not None else 0
+    garages = feature_data.get(Constants.GARAGES) if feature_data.get(Constants.GARAGES) is not None else 0
+
     item = Property(
         url,
-        "ZONA PROPS",
+        "zonaprop",
+        price_currency,
         price,
+        expenses_currency,
         expenses,
+        sqr_price,
         location,
         exact_location,
-        feature_data.get(Constants.TOTAL_SURFACE),
-        feature_data.get(Constants.COVERED_SURFACE),
-        feature_data.get(Constants.ROOMS),
-        feature_data.get(Constants.BEDROOMS),
-        feature_data.get(Constants.BATHROOMS),
-        feature_data.get(Constants.GARAGES),
+        total_surface,
+        covered_surface,
+        rooms,
+        bedrooms,
+        bathrooms,
+        garages,
         feature_data.get(Constants.AGE),
         feature_data.get(Constants.LAYOUT),
         feature_data.get(Constants.ORIENTATION),
@@ -68,17 +87,14 @@ def extract_feature_data(features):
         value = feature.get_text()
         icon_class = feature.select_one('i')['class'][0]
         if icon_class in Constants.ZONAPROP_FEATURE_MAPPING:
-            extracted_data[Constants.ZONAPROP_FEATURE_MAPPING[icon_class]] = extract_numbers(clean_data(value))
+            extracted_data[Constants.ZONAPROP_FEATURE_MAPPING[icon_class]] = extract_numbers(
+                DataFormatter.clean_data(value))
     return extracted_data
 
 
 def extract_text_and_remove(text, text_to_remove):
     parts = [part.strip() for part in text.split('\n') if part.strip() and text_to_remove in part]
     return parts[0] if parts else text
-
-
-def clean_data(data_str):
-    return data_str.replace("\n", "").strip()
 
 
 def extract_numbers(text):

@@ -1,8 +1,11 @@
 ﻿class Constants:
     ID = "Id"
     REFERENCE = "Reference"
+    PRICE_CURRENCY = "Price Currency"
     PRICE = "Price"
+    EXPENSES_CURRENCY = "Expenses Currency"
     EXPENSES = "Expenses"
+    SQR_PRICE = "Square Meter Price"
     LOCATION = "Location"
     EXACT_LOCATION = "Exact Direction"
     TOTAL_SURFACE = "Total Surface"

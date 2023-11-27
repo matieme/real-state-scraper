@@ -75,36 +75,43 @@ def get_by_ids(ids):
 
 def parse_properties(data: dict):
     property_data = {
-        Constants.MERCADOLIBRE_FEATURE_MAPPING.get(attribute.get("id", ""), None): extract_numbers(attribute.get("value_name", "0"))
+        Constants.MERCADOLIBRE_FEATURE_MAPPING.get(attribute.get("id", ""), None): extract_numbers(
+            attribute.get("value_name", "0"))
         for attribute in data.get("attributes", [])
         if attribute.get("id", "") in Constants.MERCADOLIBRE_FEATURE_MAPPING
     }
 
+    price = int(data.get("price", 0))
+    total_surface = property_data.get(Constants.TOTAL_SURFACE, None)
+
+    sqr_price = price / total_surface
+    sqr_price = round(sqr_price, 2)
+
+    age = DataFormatter.clean_age_data(property_data.get(Constants.AGE, 0))
+
     item = Property(
         data.get("permalink", ""),
-        "MERCADO LIBRE",
-        format_currency(int(data.get("price", 0))),
-        property_data.get(Constants.EXPENSES, None),
-        data.get("location", {}).get("neighborhood", {}).get("name", "") + ", " + data.get("location", {}).get("city", {}).get("name", ""),
-        data.get("location", {}).get("address_line", ""),
+        "mercadolibre",
+        "USD",
+        price,
+        "ARS",
+        property_data.get(Constants.EXPENSES, 0),
+        sqr_price,
+        data.get("location", {}).get("neighborhood", {}).get("name", "").lower() + ", " + data.get("location", {}).get(
+            "city", {}).get("name", "").lower(),
+        data.get("location", {}).get("address_line", "").lower(),
         property_data.get(Constants.TOTAL_SURFACE, None),
         property_data.get(Constants.COVERED_SURFACE, None),
         property_data.get(Constants.ROOMS, None),
         property_data.get(Constants.BEDROOMS, None),
         property_data.get(Constants.BATHROOMS, None),
         property_data.get(Constants.GARAGES, None),
-        property_data.get(Constants.AGE, None),
+        age,
         property_data.get(Constants.LAYOUT, None),
         property_data.get(Constants.ORIENTATION, None),
     )
 
     return item.to_dict()
-
-
-def format_currency(value):
-    value_str = str(value)
-    formatted_value = value_str[:-3] + '.' + value_str[-3:]
-    return "USD " + formatted_value
 
 
 def extract_data(ids_response):

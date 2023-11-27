@@ -1,4 +1,5 @@
 ﻿import re
+from datetime import datetime
 
 
 class DataFormatter:
@@ -41,4 +42,15 @@ class DataFormatter:
         if match:
             amount = int(match.group(1).replace('.', ''))
             return amount
+        return 0
+
+    @staticmethod
+    def clean_age_data(age):
+        current_year = datetime.now().year
+        if isinstance(age, (int, float)):
+            if 0 < age <= 1000:
+                return age
+            elif 1000 < age < 10000:
+                return current_year - age
+        print("Invalid Age Value")
         return 0

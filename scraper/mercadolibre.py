@@ -5,6 +5,7 @@ import re
 import pandas as pd
 from utils.property import Property
 from utils.constants import Constants
+from utils.dataformatter import DataFormatter
 
 BASE_URL = "https://api.mercadolibre.com"
 logger = logging.getLogger()

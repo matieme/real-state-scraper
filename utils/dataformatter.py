@@ -1,4 +1,7 @@
-﻿class DataFormatter:
+﻿import re
+
+
+class DataFormatter:
 
     @staticmethod
     def clean_data(data_str: str) -> str:
@@ -22,3 +25,20 @@
         currency, price = data_str.split(" ", 1)
         price = int(price.replace(".", ""))
         return currency, price
+
+    @staticmethod
+    def extract_int_value(data_str: str) -> int:
+        """Extract an integer value from a string containing currency formatted text.
+
+        Args:
+            data_str (str): The string containing the currency value.
+
+        Returns:
+            int: The extracted integer value, or None if no value is found.
+        """
+        # Regular expression pattern to match the amount in the format of $xx.xxx
+        match = re.search(r'(?:\$\s*)?(\d+(?:\.\d+)?)', data_str)
+        if match:
+            amount = int(match.group(1).replace('.', ''))
+            return amount
+        return 0

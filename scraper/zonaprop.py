@@ -110,7 +110,7 @@ def extract_currency_amount(text):
 
 
 def extract_data(soup, page, page_link):
-    container_div = soup.find('div', class_='postings-container')
+    container_div = soup.find('div', class_='postingsList-module__postings-container')
 
     for _ in range(RETRIES):
         if container_div:
@@ -119,7 +119,7 @@ def extract_data(soup, page, page_link):
         time.sleep(5)
         page.goto(page_link)
         soup = BeautifulSoup(page.content(), 'lxml')
-        container_div = soup.find('div', class_='postings-container')
+        container_div = soup.find('div', class_='postingsList-module__postings-container')
 
     if not container_div:
         logger.warning("Failed to find postings-container after retries.")
@@ -161,6 +161,7 @@ async def get_child_item_data(url):
 
         try:
             await page.goto(new_page_link_item)
+            await page.wait_for_selector('body#PROPERTY', timeout=30000)
             time.sleep(1)
             html_content = await page.content()
             soup_item = BeautifulSoup(html_content, 'lxml')
@@ -184,8 +185,9 @@ def open_new_page(page_link):
 
     try:
         page.goto(page_link)
-    except:
-        page.goto(page_link)
+        page.wait_for_selector(".postingsList-module__postings-container", timeout=30000)
+    except Exception as e:
+        logger.warning(f"No se encontró el contenedor principal: {e}")
     html = page.content()
     soup = BeautifulSoup(html, 'lxml')
     return page, soup

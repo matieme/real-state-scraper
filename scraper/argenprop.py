@@ -13,7 +13,6 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
-# Global constants
 START_PAGE = 2
 MAX_PAGES = 10
 RETRIES = 3
@@ -22,60 +21,81 @@ context = None
 config = None
 
 
-def parse_item(url, div, div_item):
-    card_price = div.select_one('p.card__price')
-    price = 0
-    price_currency = 0
-    if card_price and not card_price.select_one('.card__noprice'):
-        price_currency = card_price.select_one('.card__currency').text.strip()
-        price = DataFormatter.extract_int_value(DataFormatter.clean_data(card_price.contents[2]))
+def parse_item(url, soup):
+    # 1) selecciono el bloque principal
+    main_div = soup.select_one('div.property-main')
 
-    location_container = div.select('.card__monetary-values')
-    location = location_container[0].contents[7].get_text().lower()
+    # 2) precio y moneda
+    raw_price = main_div.select_one('p.titlebar__price').get_text(strip=True)
+    price_currency = "USD" if raw_price.upper().startswith("USD") else "ARS"
+    price = DataFormatter.extract_int_value(raw_price)
 
-    exact_direction = DataFormatter.clean_data(location_container[0].contents[3].get_text()).lower()
-    expenses = DataFormatter.extract_int_value(div.select_one('span.card__expenses').get_text()) if div.select_one(
-        'span.card__expenses') else 0
+    # 3) expensas (opcional)
+    exp_elem = main_div.select_one('p.titlebar__expenses')
+    expenses = DataFormatter.extract_int_value(exp_elem.get_text()) if exp_elem else 0
 
-    item_features = div_item.select('.property-main-features>li')
-
-    complete_data = extract_feature_data(item_features)
-
-    total_surface = complete_data[Constants.TOTAL_SURFACE] if complete_data.get(Constants.TOTAL_SURFACE) else \
-        complete_data[
-            Constants.COVERED_SURFACE]
-
-    sqr_price = price / total_surface
-    sqr_price = round(sqr_price, 2)
-
-    covered_surface = complete_data.get(Constants.COVERED_SURFACE) if complete_data.get(
-        Constants.COVERED_SURFACE) else complete_data.get(Constants.TOTAL_SURFACE)
-    rooms = clean_rooms_data(complete_data.get(Constants.ROOMS))
-    bedrooms = complete_data.get(Constants.BEDROOMS) if complete_data.get(Constants.BEDROOMS) is not None else 0
-    bathrooms = complete_data.get(Constants.BATHROOMS) if complete_data.get(Constants.BATHROOMS) is not None else 0
-    garages = complete_data.get(Constants.GARAGES) if complete_data.get(Constants.GARAGES) is not None else 0
-
-    item = Property(
-        url,
-        "argenprop",
-        price_currency,
-        price,
-        'ARS',
-        expenses,
-        sqr_price,
-        location,
-        exact_direction,
-        total_surface,
-        covered_surface,
-        rooms,
-        bedrooms,
-        bathrooms,
-        garages,
-        complete_data.get(Constants.AGE),
-        clean_repeated_words(complete_data.get(Constants.LAYOUT)),
-        clean_repeated_words(complete_data.get(Constants.ORIENTATION)),
+    # 4) dirección exacta
+    exact_direction = (
+        main_div.select_one('h2.titlebar__address')
+        .get_text(strip=True)
+        .lower()
     )
 
+    # 5) barrio / localidad
+    loc_text = main_div.select_one('h2.titlebar__title').get_text(strip=True)
+    loc_text = re.sub(r'(?i)^venta en ', '', loc_text)
+    location = loc_text.split(',')[0].strip().lower()
+
+    # 6) features (rooms, baños, superficie…)
+    features = main_div.select('ul.property-main-features > li')
+    complete_data = extract_feature_data(features)
+
+    total_surface = complete_data.get(Constants.TOTAL_SURFACE,
+                                      complete_data.get(Constants.COVERED_SURFACE, 0))
+    covered_surface = complete_data.get(Constants.COVERED_SURFACE, total_surface)
+    sqr_price = round(price / total_surface, 2) if total_surface else 0
+    rooms = clean_rooms_data(complete_data.get(Constants.ROOMS))
+    bedrooms = complete_data.get(Constants.BEDROOMS, 0)
+    bathrooms = complete_data.get(Constants.BATHROOMS, 0)
+    garages = complete_data.get(Constants.GARAGES, 0)
+    age = complete_data.get(Constants.AGE)
+    layout = clean_repeated_words(complete_data.get(Constants.LAYOUT))
+    orientation = clean_repeated_words(complete_data.get(Constants.ORIENTATION))
+
+    # 7) coordenadas
+    leaflet = soup.find('div', attrs={'data-latitude': True, 'data-longitude': True})
+
+    if leaflet:
+        raw_lat = leaflet.get('data-latitude', '')
+        raw_lon = leaflet.get('data-longitude', '')
+        latitude = raw_lat.replace(',', '.')
+        longitude = raw_lon.replace(',', '.')
+    else:
+        latitude = longitude = None
+
+    # 8) armo el dict con tu clase
+    item = Property(
+        url=url,
+        reference="argenprop",
+        price_currency=price_currency,
+        price=price,
+        expenses_currency='ARS',
+        expenses=expenses,
+        sqr_price=sqr_price,
+        location=location,
+        exact_direction=exact_direction,
+        total_surface=total_surface,
+        covered_surface=covered_surface,
+        rooms=rooms,
+        bedrooms=bedrooms,
+        bathrooms=bathrooms,
+        garages=garages,
+        age=age,
+        layout=layout,
+        orientation=orientation,
+        latitude=latitude,
+        longitude=longitude,
+    )
     return item.to_dict()
 
 
@@ -125,7 +145,7 @@ def extract_data(soup, page, page_link):
         try:
             if tag:
                 url = tag.find('a')['href']
-                item = parse_item(url, tag, get_child_item_data(url))
+                item = parse_item(url, get_child_item_data(url))
                 results.append(item)
         except Exception as e:
             logger.error(e)
@@ -138,8 +158,8 @@ def get_child_item_data(url):
     new_page_link_item = config["BASE_URL"] + url
     page_item, soup_item = open_new_page(new_page_link_item)
     time.sleep(1)
-    container_div_item = soup_item.find('div', class_='property-description')
-    return container_div_item
+    #container_div_item = soup_item.find('div', class_='property-main')
+    return soup_item
 
 
 def clean_repeated_words(data_str: str) -> str:

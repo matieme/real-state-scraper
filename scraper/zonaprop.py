@@ -57,6 +57,10 @@ def parse_item(url, div):
     bathrooms = feature_data.get(Constants.BATHROOMS) if feature_data.get(Constants.BATHROOMS) is not None else 0
     garages = feature_data.get(Constants.GARAGES) if feature_data.get(Constants.GARAGES) is not None else 0
 
+    # Get latitude and longitude from the div object (added by get_child_item_data)
+    latitude = getattr(div, 'latitude', None)
+    longitude = getattr(div, 'longitude', None)
+
     item = Property(
         url,
         "zonaprop",
@@ -76,6 +80,8 @@ def parse_item(url, div):
         feature_data.get(Constants.AGE),
         feature_data.get(Constants.LAYOUT),
         feature_data.get(Constants.ORIENTATION),
+        latitude,
+        longitude
     )
 
     return item.to_dict()
@@ -107,6 +113,17 @@ def extract_numbers(text):
 def extract_currency_amount(text):
     currency_amounts = re.findall(r'\$\s*\d+(?:\.\d+)?', text)
     return currency_amounts[0] if currency_amounts else None
+
+
+def extract_coordinates_from_map(soup):
+    """Extract latitude and longitude from the static map container."""
+    map_container = soup.select_one('.static-map-container img#static-map')
+    if map_container and 'src' in map_container.attrs:
+        src = map_container['src']
+        markers_match = re.search(r'markers=([-\d.]+),([-\d.]+)', src)
+        if markers_match:
+            return float(markers_match.group(1)), float(markers_match.group(2))
+    return None, None
 
 
 def extract_data(soup, page, page_link):
@@ -167,6 +184,13 @@ async def get_child_item_data(url):
             soup_item = BeautifulSoup(html_content, 'lxml')
 
             container_div_item = soup_item.find('div', class_='main-container-property')
+            
+            # Extract coordinates from the map
+            latitude, longitude = extract_coordinates_from_map(soup_item)
+            if container_div_item is not None:
+                container_div_item.latitude = latitude
+                container_div_item.longitude = longitude
+                
         except Exception as e:
             logger.error(f"Failed to load {new_page_link_item}: {e}")
         finally:

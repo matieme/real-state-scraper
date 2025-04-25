@@ -17,6 +17,8 @@
     AGE = "Antiguedad"
     LAYOUT = "Disposicion"
     ORIENTATION = "Orientacion"
+    LATITUDE = "Latitude"
+    LONGITUDE = "Longitude"
 
     ARGENPROP_FEATURE_MAPPING = {
         "icono-superficie_total": TOTAL_SURFACE,

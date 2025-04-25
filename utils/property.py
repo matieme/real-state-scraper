@@ -4,7 +4,7 @@
 class Property:
     def __init__(self, url="", reference=None, price_currency=None, price=None, expenses_currency=None, expenses=None, sqr_price=None, location=None, exact_direction=None, total_surface=None,
                  covered_surface=None, rooms=None, bedrooms=None, bathrooms=None, garages=None, age=None, layout=None,
-                 orientation=None):
+                 orientation=None, latitude=None, longitude=None):
         self.id = url
         self.reference = reference
         self.price_currency = price_currency
@@ -23,6 +23,8 @@ class Property:
         self.age = age
         self.layout = layout
         self.orientation = orientation
+        self.latitude = latitude
+        self.longitude = longitude
 
     def to_dict(self):
         return {
@@ -44,4 +46,6 @@ class Property:
             Constants.AGE: self.age,
             Constants.LAYOUT: self.layout,
             Constants.ORIENTATION: self.orientation,
+            Constants.LATITUDE: self.latitude,
+            Constants.LONGITUDE: self.longitude,
         }

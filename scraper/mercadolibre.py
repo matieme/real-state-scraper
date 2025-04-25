@@ -1,141 +1,208 @@
-﻿import requests
-import time
-import logging
-import re
+﻿from playwright.sync_api import sync_playwright
+from bs4 import BeautifulSoup
 import pandas as pd
+import time
+import re
+import urllib.parse
+from tqdm import tqdm
+import logging
+
 from utils.property import Property
 from utils.constants import Constants
+from utils.configloader import load_config
 from utils.dataformatter import DataFormatter
 
-BASE_URL = "https://api.mercadolibre.com"
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
-NEIGHBORHOODS_CABA = [
-    "Agronomia", "Almagro", "Balvanera", "Barracas", "Belgrano", "Boedo", "Caballito",
-    "Chacarita", "Coghlan", "Colegiales", "Constitucion", "Flores", "Floresta", "La%20Boca",
-    "La%20Paternal", "Liniers", "Mataderos", "Monte%20Castro", "Monserrat", "Nueva%20Pompeya",
-    "Nunez", "Palermo", "Parque%20Avellaneda", "Parque%20Chacabuco", "Parque%20Chas",
-    "Parque%20Patricios", "Puerto%20Madero", "Recoleta", "Retiro", "Saavedra", "San%20Cristobal",
-    "San%20Nicolas", "San%20Telmo", "Velez%20Sarsfield", "Versalles", "Villa%20Crespo",
-    "Villa%20del%20Parque", "Villa%20Devoto", "Villa%20General%20Mitre", "Villa%20Lugano",
-    "Villa%20Luro", "Villa%20Ortuzar", "Villa%20Pueyrredon", "Villa%20Real", "Villa%20Riachuelo",
-    "Villa%20Santa%20Rita", "Villa%20Soldati", "Villa%20Urquiza"
-]
+START_PAGE = 1
+MAX_PAGES = 10
+RETRIES = 3
+RESULTS_PER_PAGE = 48
+
+config = None
 
 
-def get_api_response(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return response
+def build_page_url(page_number: int) -> str:
+    """
+    Construye la URL de la página de resultados para MercadoLibre.
+    """
+    if page_number == 1:
+        return config["BASE_URL"] + "/"
+    offset = 1 + (page_number - 1) * RESULTS_PER_PAGE
+    return f"{config['BASE_URL']}/_Desde_{offset}_NoIndex_True"
 
 
-def chunks(input_list: list, chunk_size: int):
-    return [input_list[i:i + chunk_size] for i in range(0, len(input_list), chunk_size)]
+def open_new_page(page, url: str) -> BeautifulSoup:
+    """
+    Abre una URL en Playwright y retorna el Soup.
+    """
+    logger.info(f"Abriendo {url}")
+    try:
+        page.goto(url)
+    except Exception:
+        page.goto(url)
+    html = page.content()
+    return BeautifulSoup(html, 'lxml')
 
 
-def extract_numbers(text):
-    if text is None:
-        return None
-    match = re.search(r'\d+', text)
-    return int(match.group()) if match else text
+def extract_specs_from_table(soup):
+    """
+    Extrae las especificaciones de la tabla 'Principales' del inmueble.
+    """
+    specs = {}
+    specs_table = soup.select_one('div.ui-vpp-striped-specs__table')
+    if not specs_table:
+        return specs
+
+    for row in specs_table.select('tr.andes-table__row'):
+        header = row.select_one('div.andes-table__header__container')
+        value = row.select_one('span.andes-table__column--value')
+        
+        if header and value:
+            key = header.get_text(strip=True)
+            val = value.get_text(strip=True)
+            specs[key] = val
+
+    return specs
 
 
-def get_ids(urls: list[str]):
-    ids = []
-    for url in urls:
-        offset = 0
-        max_results = 1
-        while offset <= max_results:
-            try:
-                api_response = get_api_response(url + f"&offset={offset}")
-                json_data = api_response.json()
-                ids.extend([x.get("id", "") for x in json_data["results"]])
-            except Exception as e:
-                logger.error(f"Error getting ids from {url} with offset {offset}: {e}")
+def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
+    """
+    Extrae los datos clave de la ficha de un inmueble en MercadoLibre.
+    """
+    # Precio y moneda
+    price_container = soup.select_one('span.andes-money-amount')
+    price = 0
+    price_currency = None
+    
+    if price_container:
+        # Obtener precio del meta tag dentro del contenedor
+        price_meta = price_container.select_one('meta[itemprop="price"]')
+        if price_meta:
+            price = int(float(price_meta['content']))
+        
+        # Obtener moneda y convertir US$ a USD
+        currency_symbol = price_container.select_one('span.andes-money-amount__currency-symbol')
+        if currency_symbol:
+            currency = currency_symbol.get_text(strip=True)
+            price_currency = 'USD' if currency == 'US$' else currency
 
-            max_results = min(json_data["paging"]["total"], 1000) if max_results == 1 else max_results
-            offset += 50
-    return ids
+    # Ubicación y dirección exacta
+    location_container = soup.select_one('div.ui-vip-location')
+    exact_direction = ''
+    location = ''
+    
+    if location_container:
+        # Obtener la dirección completa
+        address = location_container.select_one('p.ui-pdp-color--BLACK.ui-pdp-size--SMALL')
+        if address:
+            full_address = address.get_text(strip=True).lower()
+            # Obtener solo la parte antes de la primera coma
+            exact_direction = full_address.split(',')[0].strip()
+            # El resto de la dirección (después de la primera coma) se usa para la ubicación
+            location_parts = full_address.split(',')[1:]
+            if location_parts:
+                location = ','.join(location_parts).strip()
 
+    # Extraer datos de la tabla de especificaciones
+    specs = extract_specs_from_table(soup)
+    
+    # Superficies
+    total_surface = DataFormatter.extract_int_value(specs.get('Superficie total', '0 m²'))
+    covered_surface = DataFormatter.extract_int_value(specs.get('Superficie cubierta', str(total_surface) + ' m²'))
+    
+    # Calcular precio por metro cuadrado
+    sqr_price = round(price / total_surface, 2) if total_surface else 0
 
-def get_by_ids(ids):
-    # Split ids in chunks of 20 because the API only allows 20 ids per request
-    urls = [f"{BASE_URL}/items?ids={','.join(ids_chunk)}" for ids_chunk in chunks(ids, 20)]
-    properties_data = []
+    # Ambientes y características
+    rooms = DataFormatter.extract_int_value(specs.get('Ambientes', '0'))
+    bedrooms = DataFormatter.extract_int_value(specs.get('Dormitorios', '0'))
+    bathrooms = DataFormatter.extract_int_value(specs.get('Baños', '0'))
+    garages = DataFormatter.extract_int_value(specs.get('Cocheras', '0'))
+    
+    # Otros detalles
+    age = specs.get('Antigüedad', None)
+    layout = specs.get('Disposición', None)
+    orientation = specs.get('Orientación', None)
+    
+    # Expensas
+    expenses_str = specs.get('Expensas', '0 ARS')
+    expenses = DataFormatter.extract_int_value(expenses_str)
+    expenses_currency = 'ARS'
 
-    for url in urls:
-        try:
-            api_response = get_api_response(url)
-            response_json = api_response.json()
-            properties_data.extend(response_json)
-        except Exception as e:
-            logger.error(f"Error getting response from MercadoLibre: {e}")
-
-    return properties_data
-
-
-def parse_properties(data: dict):
-    property_data = {
-        Constants.MERCADOLIBRE_FEATURE_MAPPING.get(attribute.get("id", ""), None): extract_numbers(
-            attribute.get("value_name", "0"))
-        for attribute in data.get("attributes", [])
-        if attribute.get("id", "") in Constants.MERCADOLIBRE_FEATURE_MAPPING
-    }
-
-    price = int(data.get("price", 0))
-    total_surface = property_data.get(Constants.TOTAL_SURFACE, None)
-
-    sqr_price = price / total_surface
-    sqr_price = round(sqr_price, 2)
-
-    age = DataFormatter.clean_age_data(property_data.get(Constants.AGE, 0))
+    # Coordenadas desde el mapa estático
+    latitude = longitude = None
+    map_img = soup.select_one('img.ui-pdp-image[src*="staticmap"]')
+    if map_img:
+        src = map_img['src']
+        params = urllib.parse.parse_qs(urllib.parse.urlparse(src).query)
+        center = params.get('center', [''])[0]
+        if center:
+            latitude, longitude = center.split(',')
 
     item = Property(
-        data.get("permalink", ""),
-        "mercadolibre",
-        "USD",
-        price,
-        "ARS",
-        property_data.get(Constants.EXPENSES, 0),
-        sqr_price,
-        data.get("location", {}).get("neighborhood", {}).get("name", "").lower() + ", " + data.get("location", {}).get(
-            "city", {}).get("name", "").lower(),
-        data.get("location", {}).get("address_line", "").lower(),
-        property_data.get(Constants.TOTAL_SURFACE, None),
-        property_data.get(Constants.COVERED_SURFACE, None),
-        property_data.get(Constants.ROOMS, None),
-        property_data.get(Constants.BEDROOMS, None),
-        property_data.get(Constants.BATHROOMS, None),
-        property_data.get(Constants.GARAGES, None),
-        age,
-        property_data.get(Constants.LAYOUT, None),
-        property_data.get(Constants.ORIENTATION, None),
+        url=url,
+        reference='mercadolibre',
+        price_currency=price_currency,
+        price=price,
+        expenses_currency=expenses_currency,
+        expenses=expenses,
+        sqr_price=sqr_price,
+        location=location,
+        exact_direction=exact_direction,
+        total_surface=total_surface,
+        covered_surface=covered_surface,
+        rooms=rooms,
+        bedrooms=bedrooms,
+        bathrooms=bathrooms,
+        garages=garages,
+        age=age,
+        layout=layout,
+        orientation=orientation,
+        latitude=latitude,
+        longitude=longitude,
     )
-
     return item.to_dict()
 
 
-def extract_data(ids_response):
+def extract_data_ml(soup: BeautifulSoup, page, page_link: str) -> pd.DataFrame:
+    """
+    Extrae el listado de enlaces y realiza parse_item_ml en cada ficha.
+    """
+    container = soup.find('ol', class_='ui-search-layout')
+    if not container:
+        logger.warning("No se encontró el listado de inmuebles.")
+        return pd.DataFrame()
+
     results = []
-    for prop in ids_response:
+    for tag in container.find_all('li', recursive=False):
         try:
-            property_data = parse_properties(prop["body"])
-            results.append(property_data)
+            link = tag.find('a', href=True)['href']
+            child_soup = open_new_page(page, link)
+            time.sleep(1)
+            item = parse_item_ml(link, child_soup)
+            results.append(item)
         except Exception as e:
-            logger.error(f"Error parsing property from MercadoLibre: {e}")
+            logger.error(e)
     return pd.DataFrame(results)
 
 
 def run():
-    start_time = time.time()
-    base_url = f"{BASE_URL}/sites/MLA/search?category=MLA401686"
-    urls = [f"{base_url}&q={neighborhood}+capital+federal" for neighborhood in NEIGHBORHOODS_CABA]
+    global config
+    config = load_config("scraper/configs/mercadolibre-config.json")
+    
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
+        page = context.new_page()
+        page.set_extra_http_headers(config["HEADERS"])
 
-    ids = get_ids(urls)
+        for current_page in tqdm(range(START_PAGE, MAX_PAGES + 1)):
+            page_url = build_page_url(current_page)
+            soup = open_new_page(page, page_url)
+            df = extract_data_ml(soup, page, page_url)
+            df.to_csv(f"results/scraped_ml_page_{current_page}.csv", index=False)
+            time.sleep(2)
 
-    ids_response = get_by_ids(ids)
-    df_page = extract_data(ids_response)
-    df_page.to_csv(f"results/scraped_mercadolibre.csv", index=False)
-
-    elapsed_time = time.time() - start_time
-    logger.info(f"Time taken to get properties from MercadoLibre: {elapsed_time:.2f} seconds")
+        browser.close()

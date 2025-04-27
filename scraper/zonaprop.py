@@ -67,7 +67,8 @@ def parse_item(url, div):
     sqr_price = price / total_surface
     sqr_price = round(sqr_price, 2)
 
-    covered_surface = feature_data.get(Constants.COVERED_SURFACE) if feature_data.get(Constants.COVERED_SURFACE) else feature_data.get(Constants.TOTAL_SURFACE)
+    covered_surface = feature_data.get(Constants.COVERED_SURFACE) if feature_data.get(
+        Constants.COVERED_SURFACE) else feature_data.get(Constants.TOTAL_SURFACE)
     rooms = feature_data.get(Constants.ROOMS) if feature_data.get(Constants.ROOMS) is not None else 0
     bedrooms = feature_data.get(Constants.BEDROOMS) if feature_data.get(Constants.BEDROOMS) is not None else 0
     bathrooms = feature_data.get(Constants.BATHROOMS) if feature_data.get(Constants.BATHROOMS) is not None else 0
@@ -77,6 +78,7 @@ def parse_item(url, div):
     latitude = getattr(div, 'latitude', None)
     longitude = getattr(div, 'longitude', None)
 
+    # Create Property object with organized fields
     item = Property(
         url=url,
         source_name=source_name,
@@ -87,8 +89,6 @@ def parse_item(url, div):
         expenses_currency=expenses_currency,
         expenses=expenses,
         sqr_price=sqr_price,
-        location=location,
-        exact_direction=exact_location,
         total_surface=total_surface,
         covered_surface=covered_surface,
         rooms=rooms,
@@ -98,10 +98,11 @@ def parse_item(url, div):
         age=feature_data.get(Constants.AGE),
         layout=feature_data.get(Constants.LAYOUT),
         orientation=feature_data.get(Constants.ORIENTATION),
+        location=location,
+        exact_direction=exact_location,
         latitude=latitude,
         longitude=longitude,
     )
-
     return item.to_dict()
 
 
@@ -202,13 +203,13 @@ async def get_child_item_data(url):
             soup_item = BeautifulSoup(html_content, 'lxml')
 
             container_div_item = soup_item.find('div', class_='main-container-property')
-            
+
             # Extract coordinates from the map
             latitude, longitude = extract_coordinates_from_map(soup_item)
             if container_div_item is not None:
                 container_div_item.latitude = latitude
                 container_div_item.longitude = longitude
-                
+
         except Exception as e:
             logger.error(f"Failed to load {new_page_link_item}: {e}")
         finally:

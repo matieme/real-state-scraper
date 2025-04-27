@@ -59,7 +59,7 @@ def extract_specs_from_table(soup):
     for row in specs_table.select('tr.andes-table__row'):
         header = row.select_one('div.andes-table__header__container')
         value = row.select_one('span.andes-table__column--value')
-        
+
         if header and value:
             key = header.get_text(strip=True)
             val = value.get_text(strip=True)
@@ -81,23 +81,23 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
     """
     Extrae los datos clave de la ficha de un inmueble en MercadoLibre.
     """
-    # Extraer ID de la propiedad
+    # Identification of the property
     property_id = extract_property_id(url)
     source_name = "mercadolibre"
     source_identifier = f"{source_name}-{property_id}" if property_id else None
     scrape_date = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    # Precio y moneda
+    # Offer of the property
     price_container = soup.select_one('span.andes-money-amount')
     price = 0
     price_currency = None
-    
+
     if price_container:
         # Obtener precio del meta tag dentro del contenedor
         price_meta = price_container.select_one('meta[itemprop="price"]')
         if price_meta:
             price = int(float(price_meta['content']))
-        
+
         # Obtener moneda y convertir US$ a USD
         currency_symbol = price_container.select_one('span.andes-money-amount__currency-symbol')
         if currency_symbol:
@@ -108,7 +108,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
     location_container = soup.select_one('div.ui-vip-location')
     exact_direction = ''
     location = ''
-    
+
     if location_container:
         # Obtener la dirección completa
         address = location_container.select_one('p.ui-pdp-color--BLACK.ui-pdp-size--SMALL')
@@ -123,11 +123,11 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
 
     # Extraer datos de la tabla de especificaciones
     specs = extract_specs_from_table(soup)
-    
+
     # Superficies
     total_surface = DataFormatter.extract_int_value(specs.get('Superficie total', '0 m²'))
     covered_surface = DataFormatter.extract_int_value(specs.get('Superficie cubierta', str(total_surface) + ' m²'))
-    
+
     # Calcular precio por metro cuadrado
     sqr_price = round(price / total_surface, 2) if total_surface else 0
 
@@ -136,12 +136,12 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
     bedrooms = DataFormatter.extract_int_value(specs.get('Dormitorios', '0'))
     bathrooms = DataFormatter.extract_int_value(specs.get('Baños', '0'))
     garages = DataFormatter.extract_int_value(specs.get('Cocheras', '0'))
-    
+
     # Otros detalles
     age = specs.get('Antigüedad', None)
     layout = specs.get('Disposición', None)
     orientation = specs.get('Orientación', None)
-    
+
     # Expensas
     expenses_str = specs.get('Expensas', '0 ARS')
     expenses = DataFormatter.extract_int_value(expenses_str)
@@ -157,6 +157,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
         if center:
             latitude, longitude = center.split(',')
 
+    # Create Property object with organized fields
     item = Property(
         url=url,
         source_name=source_name,
@@ -167,17 +168,17 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
         expenses_currency=expenses_currency,
         expenses=expenses,
         sqr_price=sqr_price,
-        location=location,
-        exact_direction=exact_direction,
         total_surface=total_surface,
         covered_surface=covered_surface,
         rooms=rooms,
         bedrooms=bedrooms,
         bathrooms=bathrooms,
         garages=garages,
-        age=age,
         layout=layout,
         orientation=orientation,
+        age=age,
+        location=location,
+        exact_direction=exact_direction,
         latitude=latitude,
         longitude=longitude,
     )
@@ -209,7 +210,7 @@ def extract_data_ml(soup: BeautifulSoup, page, page_link: str) -> pd.DataFrame:
 def run():
     global config
     config = load_config("scraper/configs/mercadolibre-config.json")
-    
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])

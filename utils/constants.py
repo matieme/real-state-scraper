@@ -1,5 +1,6 @@
 ﻿class Constants:
     ID = "Id"
+    URL = "Url"
     SOURCE_NAME = "Source Name"
     SOURCE_IDENTIFIER = "SourceIdentifier"
     SCRAPE_DATE = "ScrapeDate"

@@ -35,8 +35,8 @@ class DBClient:
             # 1. Verificar si ya existe la propiedad
             self.cur.execute("""
                 SELECT id FROM properties 
-                WHERE id = %s AND source_name = %s
-            """, (prop.id, prop.source_name))
+                WHERE source_name = %s AND source_identifier = %s
+            """, (prop.source_name, prop.source_identifier))
             result = self.cur.fetchone()
 
             if result:
@@ -44,7 +44,6 @@ class DBClient:
                 # Actualizar datos de la propiedad
                 self.cur.execute("""
                     UPDATE properties SET
-                        source_identifier = %s,
                         location = %s,
                         exact_direction = %s,
                         total_surface = %s,
@@ -58,10 +57,10 @@ class DBClient:
                         orientation = %s,
                         latitude = %s,
                         longitude = %s,
+                        url = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
                 """, (
-                    prop.source_identifier,
                     prop.location,
                     prop.exact_direction,
                     prop.total_surface,
@@ -75,13 +74,13 @@ class DBClient:
                     prop.orientation,
                     prop.latitude,
                     prop.longitude,
+                    prop.url,
                     property_id
                 ))
             else:
                 # Insertar nueva propiedad
                 self.cur.execute("""
                     INSERT INTO properties (
-                        id,
                         source_name,
                         source_identifier,
                         location,
@@ -96,11 +95,11 @@ class DBClient:
                         layout,
                         orientation,
                         latitude,
-                        longitude
+                        longitude,
+                        url
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
-                    prop.id,
                     prop.source_name,
                     prop.source_identifier,
                     prop.location,
@@ -115,7 +114,8 @@ class DBClient:
                     prop.layout,
                     prop.orientation,
                     prop.latitude,
-                    prop.longitude
+                    prop.longitude,
+                    prop.url
                 ))
                 property_id = self.cur.fetchone()[0]
 
@@ -123,13 +123,13 @@ class DBClient:
             self.cur.execute("""
                 SELECT listing_price_amount 
                 FROM price_history 
-                WHERE property_id = %s 
+                WHERE source_identifier = %s AND source_name = %s
                 ORDER BY scrape_date DESC LIMIT 1
-            """, (property_id,))
+            """, (prop.source_identifier, prop.source_name))
             last_price = self.cur.fetchone()
 
             if not last_price or last_price[0] != prop.price:
-                self.insert_price_history(property_id, prop)
+                self.insert_price_history(prop.source_identifier, prop.source_name, prop)
 
             self.conn.commit()
             return property_id
@@ -139,26 +139,29 @@ class DBClient:
             logger.error(f"Error upserting property: {e}")
             raise
 
-    def insert_price_history(self, property_id, prop):
+    def insert_price_history(self, source_identifier, source_name, prop):
         """
         Inserta un nuevo historial de precio.
         Args:
-            property_id: ID de la propiedad en la base de datos
+            source_identifier: Identificador único de la propiedad en la fuente original
+            source_name: Nombre de la fuente de datos
             prop: Objeto Property con los datos del inmueble
         """
         try:
             self.cur.execute("""
                 INSERT INTO price_history (
-                    property_id,
+                    source_identifier,
+                    source_name,
                     listing_price_amount,
                     listing_price_currency,
                     expenses,
                     expenses_currency,
                     sqr_price,
                     scrape_date
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                property_id,
+                source_identifier,
+                source_name,
                 prop.price,
                 prop.price_currency,
                 prop.expenses,

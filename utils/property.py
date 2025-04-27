@@ -9,9 +9,9 @@ class Property:
         """
         Identification of the property
         """
-        self.id = url
         self.source_name = source_name
         self.source_identifier = source_identifier
+        self.url = url
         self.scrape_date = scrape_date or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         """
         Offer of the property
@@ -47,7 +47,7 @@ class Property:
         """
         return {
             # Identification of the property
-            Constants.ID: self.id,
+            Constants.URL: self.url,
             Constants.SOURCE_NAME: self.source_name,
             Constants.SOURCE_IDENTIFIER: self.source_identifier,
             Constants.SCRAPE_DATE: self.scrape_date,
@@ -83,7 +83,7 @@ class Property:
         Create a Property instance from a dictionary with Constants keys
         """
         FIELD_MAPPING = {
-            Constants.ID: 'url',
+            Constants.URL: 'url',
             Constants.SOURCE_NAME: 'source_name',
             Constants.SOURCE_IDENTIFIER: 'source_identifier',
             Constants.SCRAPE_DATE: 'scrape_date',

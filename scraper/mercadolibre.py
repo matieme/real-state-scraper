@@ -12,6 +12,7 @@ from utils.property import Property
 from utils.constants import Constants
 from utils.configloader import load_config
 from utils.dataformatter import DataFormatter
+from services.scraper_service import ScraperService
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
@@ -210,6 +211,7 @@ def extract_data_ml(soup: BeautifulSoup, page, page_link: str) -> pd.DataFrame:
 def run():
     global config
     config = load_config("scraper/configs/mercadolibre-config.json")
+    scraper_service = ScraperService()
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -217,11 +219,18 @@ def run():
         page = context.new_page()
         page.set_extra_http_headers(config["HEADERS"])
 
+        all_properties = []
         for current_page in tqdm(range(START_PAGE, MAX_PAGES + 1)):
             page_url = build_page_url(current_page)
             soup = open_new_page(page, page_url)
-            df = extract_data_ml(soup, page, page_url)
-            df.to_csv(f"results/scraped_ml_page_{current_page}.csv", index=False)
+            properties = extract_data_ml(soup, page, page_url)
+            all_properties.extend(properties.to_dict('records'))
             time.sleep(2)
 
         browser.close()
+
+        # Convertir los diccionarios a objetos Property
+        property_objects = [Property(**prop) for prop in all_properties]
+        
+        # Guardar en la base de datos
+        scraper_service.process_scraped_items(property_objects)

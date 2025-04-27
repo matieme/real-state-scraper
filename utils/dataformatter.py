@@ -46,11 +46,22 @@ class DataFormatter:
 
     @staticmethod
     def clean_age_data(age):
-        current_year = datetime.now().year
+        """Clean age data, handling special cases like 'A estrenar'.
+        
+        Args:
+            age: The age value to clean. Can be a number or string.
+            
+        Returns:
+            int: 0 if the property is new ('A estrenar'), the numeric age otherwise.
+        """
+        if isinstance(age, str) and 'estrenar' in age.lower():
+            return 0
+
         if isinstance(age, (int, float)):
-            if 0 < age <= 1000:
+            current_year = datetime.now().year
+            if 0 < age <= 1000:  # Direct age in years
                 return age
-            elif 1000 < age < 10000:
+            elif 1000 < age < 10000:  # Year of construction
                 return current_year - age
-        print("Invalid Age Value")
-        return 0
+
+        return 0  # Default case for invalid/unknown age

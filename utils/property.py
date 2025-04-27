@@ -1,7 +1,6 @@
 ﻿from utils.constants import Constants
 from datetime import datetime, timezone
 
-
 class Property:
     def __init__(self, url="", source_name=None, price_currency=None, price=None, expenses_currency=None, expenses=None,
                  sqr_price=None, location=None, exact_direction=None, total_surface=None,
@@ -77,3 +76,35 @@ class Property:
             Constants.LATITUDE: self.latitude,
             Constants.LONGITUDE: self.longitude,
         }
+
+    @classmethod
+    def from_dict(cls, data):
+        """
+        Create a Property instance from a dictionary with Constants keys
+        """
+        FIELD_MAPPING = {
+            Constants.ID: 'url',
+            Constants.SOURCE_NAME: 'source_name',
+            Constants.SOURCE_IDENTIFIER: 'source_identifier',
+            Constants.SCRAPE_DATE: 'scrape_date',
+            Constants.PRICE_CURRENCY: 'price_currency',
+            Constants.PRICE: 'price',
+            Constants.EXPENSES_CURRENCY: 'expenses_currency',
+            Constants.EXPENSES: 'expenses',
+            Constants.SQR_PRICE: 'sqr_price',
+            Constants.TOTAL_SURFACE: 'total_surface',
+            Constants.COVERED_SURFACE: 'covered_surface',
+            Constants.ROOMS: 'rooms',
+            Constants.BEDROOMS: 'bedrooms',
+            Constants.BATHROOMS: 'bathrooms',
+            Constants.GARAGES: 'garages',
+            Constants.LAYOUT: 'layout',
+            Constants.ORIENTATION: 'orientation',
+            Constants.AGE: 'age',
+            Constants.LOCATION: 'location',
+            Constants.EXACT_LOCATION: 'exact_direction',
+            Constants.LATITUDE: 'latitude',
+            Constants.LONGITUDE: 'longitude',
+        }
+        init_kwargs = {FIELD_MAPPING[k]: v for k, v in data.items() if k in FIELD_MAPPING}
+        return cls(**init_kwargs)

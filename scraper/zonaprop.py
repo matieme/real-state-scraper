@@ -13,6 +13,7 @@ from utils.dataformatter import DataFormatter
 import re
 import logging
 from datetime import datetime, timezone
+from services.scraper_service import ScraperService
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
@@ -35,7 +36,10 @@ def extract_property_id(url: str) -> str:
 
 
 def parse_item(url, div):
-    # Extraer ID de la propiedad
+    """
+    Extrae los datos clave de la ficha de un inmueble en Zonaprop.
+    """
+    # Identification of the property
     property_id = extract_property_id(url)
     source_name = "zonaprop"
     source_identifier = f"{source_name}-{property_id}" if property_id else None
@@ -64,7 +68,7 @@ def parse_item(url, div):
 
     total_surface = feature_data.get(Constants.TOTAL_SURFACE)
 
-    sqr_price = price / total_surface
+    sqr_price = price / total_surface if total_surface else 0
     sqr_price = round(sqr_price, 2)
 
     covered_surface = feature_data.get(Constants.COVERED_SURFACE) if feature_data.get(
@@ -95,7 +99,7 @@ def parse_item(url, div):
         bedrooms=bedrooms,
         bathrooms=bathrooms,
         garages=garages,
-        age=feature_data.get(Constants.AGE),
+        age=DataFormatter.clean_age_data(feature_data.get(Constants.AGE)),
         layout=feature_data.get(Constants.LAYOUT),
         orientation=feature_data.get(Constants.ORIENTATION),
         location=location,
@@ -250,19 +254,27 @@ def run():
     global config
 
     config = load_config("scraper/configs/zonaprop-config.json")
+    scraper_service = ScraperService()
+
     with sync_playwright() as p:
+        all_properties = []
         for current_page in tqdm(range(START_PAGE, MAX_PAGES + 1)):
             browser = p.chromium.launch(headless=False)
-
             context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
 
             page_link = f'{config["BASE_URL"]}/inmuebles-venta-capital-federal-pagina-{current_page}.html'
             time.sleep(1)
             page, soup = open_new_page(page_link)
-            df_page = extract_data(soup, page, page_link)
 
-            df_page.to_csv(f"results/scraped_zonaprop_page_{current_page}.csv", index=False)
+            # Extraer propiedades de la página actual
+            properties = extract_data(soup, page, page_link)
+            all_properties.extend(properties.to_dict('records'))
 
             browser.close()  # Close browser after processing each page
-
             time.sleep(3)  # Add a delay after closing the browser before opening a new one for the next URL
+
+        # Convertir los diccionarios a objetos Property
+        property_objects = [Property.from_dict(prop) for prop in all_properties]
+
+        # Guardar en la base de datos
+        scraper_service.process_scraped_items(property_objects)

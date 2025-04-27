@@ -10,6 +10,7 @@ from utils.configloader import load_config
 from utils.dataformatter import DataFormatter
 import logging
 from datetime import datetime, timezone
+from services.scraper_service import ScraperService
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
@@ -176,7 +177,7 @@ def get_child_item_data(url):
     new_page_link_item = config["BASE_URL"] + url
     page_item, soup_item = open_new_page(new_page_link_item)
     time.sleep(1)
-    #container_div_item = soup_item.find('div', class_='property-main')
+    # container_div_item = soup_item.find('div', class_='property-main')
     return soup_item
 
 
@@ -214,18 +215,26 @@ def run():
     global config
 
     config = load_config("scraper/configs/argenprop-config.json")
+    scraper_service = ScraperService()
+
     with sync_playwright() as p:
+        all_properties = []
         for current_page in tqdm(range(START_PAGE, MAX_PAGES + 1)):
             browser = p.chromium.launch(headless=False)
-
             context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
 
             page_link = f'{config["BASE_URL"]}/departamentos/venta/capital-federal/pagina-{current_page}'
             page, soup = open_new_page(page_link)
-            df_page = extract_data(soup, page, page_link)
 
-            df_page.to_csv(f"results/scraped_argenprop_page_{current_page}.csv", index=False)
+            # Extraer propiedades de la página actual
+            properties = extract_data(soup, page, page_link)
+            all_properties.extend(properties.to_dict('records'))
 
             browser.close()  # Close browser after processing each page
-
             time.sleep(3)  # Add a delay after closing the browser before opening a new one for the next URL
+
+        # Convertir los diccionarios a objetos Property
+        property_objects = [Property(**prop) for prop in all_properties]
+
+        # Guardar en la base de datos
+        scraper_service.process_scraped_items(property_objects)

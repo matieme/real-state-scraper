@@ -6,6 +6,7 @@ import re
 import urllib.parse
 from tqdm import tqdm
 import logging
+from datetime import datetime, timezone
 
 from utils.property import Property
 from utils.constants import Constants
@@ -84,6 +85,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
     property_id = extract_property_id(url)
     source_name = "mercadolibre"
     source_identifier = f"{source_name}-{property_id}" if property_id else None
+    scrape_date = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Precio y moneda
     price_container = soup.select_one('span.andes-money-amount')
@@ -159,6 +161,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
         url=url,
         source_name=source_name,
         source_identifier=source_identifier,
+        scrape_date=scrape_date,
         price_currency=price_currency,
         price=price,
         expenses_currency=expenses_currency,

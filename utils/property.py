@@ -1,13 +1,15 @@
 ﻿from utils.constants import Constants
+from datetime import datetime, timezone
 
 
 class Property:
     def __init__(self, url="", source_name=None, price_currency=None, price=None, expenses_currency=None, expenses=None, sqr_price=None, location=None, exact_direction=None, total_surface=None,
                  covered_surface=None, rooms=None, bedrooms=None, bathrooms=None, garages=None, age=None, layout=None,
-                 orientation=None, latitude=None, longitude=None, source_identifier=None):
+                 orientation=None, latitude=None, longitude=None, source_identifier=None, scrape_date=None):
         self.id = url
         self.source_name = source_name
         self.source_identifier = source_identifier
+        self.scrape_date = scrape_date or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         self.price_currency = price_currency
         self.price = price
         self.expenses_currency = expenses_currency
@@ -32,6 +34,7 @@ class Property:
             Constants.ID: self.id,
             Constants.SOURCE_NAME: self.source_name,
             Constants.SOURCE_IDENTIFIER: self.source_identifier,
+            Constants.SCRAPE_DATE: self.scrape_date,
             Constants.PRICE_CURRENCY: self.price_currency,
             Constants.PRICE: self.price,
             Constants.EXPENSES_CURRENCY: self.expenses_currency,

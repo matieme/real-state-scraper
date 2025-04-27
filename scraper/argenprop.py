@@ -9,6 +9,7 @@ from utils.constants import Constants
 from utils.configloader import load_config
 from utils.dataformatter import DataFormatter
 import logging
+from datetime import datetime, timezone
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
@@ -35,6 +36,7 @@ def parse_item(url, soup):
     property_id = extract_property_id(url)
     source_name = "argenprop"
     source_identifier = f"{source_name}-{property_id}" if property_id else None
+    scrape_date = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # 1) selecciono el bloque principal
     main_div = soup.select_one('div.property-main')
@@ -92,6 +94,7 @@ def parse_item(url, soup):
         url=url,
         source_name=source_name,
         source_identifier=source_identifier,
+        scrape_date=scrape_date,
         price_currency=price_currency,
         price=price,
         expenses_currency='ARS',

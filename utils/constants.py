@@ -2,6 +2,7 @@
     ID = "Id"
     SOURCE_NAME = "Source Name"
     SOURCE_IDENTIFIER = "Source Identifier"
+    SCRAPE_DATE = "Scrape Date"
     PRICE_CURRENCY = "Price Currency"
     PRICE = "Price"
     EXPENSES_CURRENCY = "Expenses Currency"

@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 from utils.dataformatter import DataFormatter
 import re
 import logging
+from datetime import datetime, timezone
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
@@ -38,6 +39,7 @@ def parse_item(url, div):
     property_id = extract_property_id(url)
     source_name = "zonaprop"
     source_identifier = f"{source_name}-{property_id}" if property_id else None
+    scrape_date = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     container = div.select('.clearfix')
     price_dirty = extract_text_and_remove(container[2].select_one('.price-value').text.strip(), 'USD')
@@ -76,9 +78,10 @@ def parse_item(url, div):
     longitude = getattr(div, 'longitude', None)
 
     item = Property(
-        url,
+        url=url,
         source_name=source_name,
         source_identifier=source_identifier,
+        scrape_date=scrape_date,
         price_currency=price_currency,
         price=price,
         expenses_currency=expenses_currency,

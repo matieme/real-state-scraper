@@ -24,7 +24,21 @@ RETRIES = 3
 context = None
 
 
+def extract_property_id(url: str) -> str:
+    """
+    Extrae el ID de la propiedad de la URL de Zonaprop.
+    Ejemplo: de /propiedades/clasificado/veclocin-oficina-usd1600-m-sup2--con-renta-del-4-anual-frente-56043402.html extrae 56043402
+    """
+    match = re.search(r'-(\d+)\.html$', url)
+    return match.group(1) if match else ''
+
+
 def parse_item(url, div):
+    # Extraer ID de la propiedad
+    property_id = extract_property_id(url)
+    source_name = "zonaprop"
+    source_identifier = f"{source_name}-{property_id}" if property_id else None
+
     container = div.select('.clearfix')
     price_dirty = extract_text_and_remove(container[2].select_one('.price-value').text.strip(), 'USD')
     price_currency, price = DataFormatter.clean_price_and_currency(price_dirty)
@@ -63,25 +77,26 @@ def parse_item(url, div):
 
     item = Property(
         url,
-        "zonaprop",
-        price_currency,
-        price,
-        expenses_currency,
-        expenses,
-        sqr_price,
-        location,
-        exact_location,
-        total_surface,
-        covered_surface,
-        rooms,
-        bedrooms,
-        bathrooms,
-        garages,
-        feature_data.get(Constants.AGE),
-        feature_data.get(Constants.LAYOUT),
-        feature_data.get(Constants.ORIENTATION),
-        latitude,
-        longitude
+        source_name=source_name,
+        source_identifier=source_identifier,
+        price_currency=price_currency,
+        price=price,
+        expenses_currency=expenses_currency,
+        expenses=expenses,
+        sqr_price=sqr_price,
+        location=location,
+        exact_direction=exact_location,
+        total_surface=total_surface,
+        covered_surface=covered_surface,
+        rooms=rooms,
+        bedrooms=bedrooms,
+        bathrooms=bathrooms,
+        garages=garages,
+        age=feature_data.get(Constants.AGE),
+        layout=feature_data.get(Constants.LAYOUT),
+        orientation=feature_data.get(Constants.ORIENTATION),
+        latitude=latitude,
+        longitude=longitude,
     )
 
     return item.to_dict()

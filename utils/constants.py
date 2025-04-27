@@ -1,6 +1,7 @@
 ﻿class Constants:
     ID = "Id"
-    REFERENCE = "Reference"
+    SOURCE_NAME = "Source Name"
+    SOURCE_IDENTIFIER = "Source Identifier"
     PRICE_CURRENCY = "Price Currency"
     PRICE = "Price"
     EXPENSES_CURRENCY = "Expenses Currency"

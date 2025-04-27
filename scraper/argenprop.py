@@ -21,7 +21,21 @@ context = None
 config = None
 
 
+def extract_property_id(url: str) -> str:
+    """
+    Extrae el ID de la propiedad de la URL de Argenprop.
+    Ejemplo: de /departamento-en-venta-en-recoleta-4-ambientes--17014913 extrae 17014913
+    """
+    match = re.search(r'--(\d+)$', url)
+    return match.group(1) if match else ''
+
+
 def parse_item(url, soup):
+    # Extraer ID de la propiedad
+    property_id = extract_property_id(url)
+    source_name = "argenprop"
+    source_identifier = f"{source_name}-{property_id}" if property_id else None
+
     # 1) selecciono el bloque principal
     main_div = soup.select_one('div.property-main')
 
@@ -76,7 +90,8 @@ def parse_item(url, soup):
     # 8) armo el dict con tu clase
     item = Property(
         url=url,
-        reference="argenprop",
+        source_name=source_name,
+        source_identifier=source_identifier,
         price_currency=price_currency,
         price=price,
         expenses_currency='ARS',

@@ -67,10 +67,24 @@ def extract_specs_from_table(soup):
     return specs
 
 
+def extract_property_id(url: str) -> str:
+    """
+    Extrae el ID de la propiedad de la URL de MercadoLibre.
+    Ejemplo: de https://casa.mercadolibre.com.ar/MLA-1464845225-casa... extrae MLA-1464845225
+    """
+    match = re.search(r'/(MLA-\d+)-', url)
+    return match.group(1) if match else ''
+
+
 def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
     """
     Extrae los datos clave de la ficha de un inmueble en MercadoLibre.
     """
+    # Extraer ID de la propiedad
+    property_id = extract_property_id(url)
+    source_name = "mercadolibre"
+    source_identifier = f"{source_name}-{property_id}" if property_id else None
+
     # Precio y moneda
     price_container = soup.select_one('span.andes-money-amount')
     price = 0
@@ -143,7 +157,8 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
 
     item = Property(
         url=url,
-        reference='mercadolibre',
+        source_name=source_name,
+        source_identifier=source_identifier,
         price_currency=price_currency,
         price=price,
         expenses_currency=expenses_currency,

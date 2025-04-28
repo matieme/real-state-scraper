@@ -230,7 +230,7 @@ def run():
         browser.close()
 
         # Convertir los diccionarios a objetos Property
-        property_objects = [Property(**prop) for prop in all_properties]
-        
+        property_objects = [Property.from_dict(prop) for prop in all_properties]
+
         # Guardar en la base de datos
         scraper_service.process_scraped_items(property_objects)

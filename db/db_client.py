@@ -25,7 +25,7 @@ class DBClient:
 
     def upsert_property(self, prop):
         """
-        Inserta o actualiza una propiedad, y guarda historial de precio.
+        Inserta o actualiza una propiedad, y guarda historial de precio si este cambió.
         Args:
             prop: Objeto Property con los datos del inmueble
         Returns:
@@ -34,49 +34,37 @@ class DBClient:
         try:
             # 1. Verificar si ya existe la propiedad
             self.cur.execute("""
-                SELECT id FROM properties 
+                SELECT id, listing_price_amount FROM properties 
                 WHERE source_name = %s AND source_identifier = %s
             """, (prop.source_name, prop.source_identifier))
             result = self.cur.fetchone()
 
             if result:
                 property_id = result[0]
-                # Actualizar datos de la propiedad
-                self.cur.execute("""
-                    UPDATE properties SET
-                        location = %s,
-                        exact_direction = %s,
-                        total_surface = %s,
-                        covered_surface = %s,
-                        rooms = %s,
-                        bedrooms = %s,
-                        bathrooms = %s,
-                        garages = %s,
-                        age = %s,
-                        layout = %s,
-                        orientation = %s,
-                        latitude = %s,
-                        longitude = %s,
-                        url = %s,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE id = %s
-                """, (
-                    prop.location,
-                    prop.exact_direction,
-                    prop.total_surface,
-                    prop.covered_surface,
-                    prop.rooms,
-                    prop.bedrooms,
-                    prop.bathrooms,
-                    prop.garages,
-                    prop.age,
-                    prop.layout,
-                    prop.orientation,
-                    prop.latitude,
-                    prop.longitude,
-                    prop.url,
-                    property_id
-                ))
+                last_price = result[1]
+                
+                # Verificar si el precio cambió para guardar en historial
+                if last_price != prop.price:
+                    self.insert_price_history(prop.source_identifier, prop.source_name, prop)
+                    
+                    # Si el precio cambió, solo actualizamos los campos relacionados con el precio
+                    self.cur.execute("""
+                        UPDATE properties SET
+                            listing_price_amount = %s,
+                            listing_price_currency = %s,
+                            expenses = %s,
+                            expenses_currency = %s,
+                            sqr_price = %s,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s
+                    """, (
+                        prop.price,
+                        prop.price_currency,
+                        prop.expenses,
+                        prop.expenses_currency,
+                        prop.sqr_price,
+                        property_id
+                    ))
             else:
                 # Insertar nueva propiedad
                 self.cur.execute("""
@@ -96,8 +84,14 @@ class DBClient:
                         orientation,
                         latitude,
                         longitude,
-                        url
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        url,
+                        listing_price_amount,
+                        listing_price_currency,
+                        expenses,
+                        expenses_currency,
+                        sqr_price,
+                        scrape_date
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     prop.source_name,
@@ -115,20 +109,17 @@ class DBClient:
                     prop.orientation,
                     prop.latitude,
                     prop.longitude,
-                    prop.url
+                    prop.url,
+                    prop.price,
+                    prop.price_currency,
+                    prop.expenses,
+                    prop.expenses_currency,
+                    prop.sqr_price,
+                    datetime.fromisoformat(prop.scrape_date.replace('Z', '+00:00'))
                 ))
                 property_id = self.cur.fetchone()[0]
-
-            # 2. Verificar si el precio cambió
-            self.cur.execute("""
-                SELECT listing_price_amount 
-                FROM price_history 
-                WHERE source_identifier = %s AND source_name = %s
-                ORDER BY scrape_date DESC LIMIT 1
-            """, (prop.source_identifier, prop.source_name))
-            last_price = self.cur.fetchone()
-
-            if not last_price or last_price[0] != prop.price:
+                
+                # Para una nueva propiedad, también guardamos el primer registro en el historial
                 self.insert_price_history(prop.source_identifier, prop.source_name, prop)
 
             self.conn.commit()

@@ -4,17 +4,23 @@ CREATE TABLE IF NOT EXISTS properties (
     source_name VARCHAR(50) NOT NULL,
     source_identifier VARCHAR(100) NOT NULL,
     url TEXT,
-    location TEXT,
-    exact_direction TEXT,
+    scrape_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    listing_price_amount NUMERIC NOT NULL,
+    listing_price_currency VARCHAR(3) NOT NULL,
+    expenses NUMERIC,
+    expenses_currency VARCHAR(3),
+    sqr_price NUMERIC,
     total_surface NUMERIC,
     covered_surface NUMERIC,
     rooms INTEGER,
     bedrooms INTEGER,
     bathrooms INTEGER,
     garages INTEGER,
-    age TEXT,
     layout TEXT,
     orientation TEXT,
+    age TEXT,
+    location TEXT,
+    exact_direction TEXT,
     latitude NUMERIC,
     longitude NUMERIC,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -22,7 +28,7 @@ CREATE TABLE IF NOT EXISTS properties (
     UNIQUE(source_name, source_identifier)
 );
 
--- Tabla de historial de precios
+-- Tabla de historial de precios (guarda sólo cuando el precio cambia)
 CREATE TABLE IF NOT EXISTS price_history (
     id SERIAL PRIMARY KEY,
     source_name VARCHAR(50) NOT NULL,
@@ -40,4 +46,4 @@ CREATE TABLE IF NOT EXISTS price_history (
 -- Índices para mejorar performance
 CREATE INDEX idx_properties_source ON properties(source_name, source_identifier);
 CREATE INDEX idx_price_history_source ON price_history(source_name, source_identifier);
-CREATE INDEX idx_price_history_date ON price_history(scrape_date); 
+CREATE INDEX idx_price_history_date ON price_history(scrape_date);

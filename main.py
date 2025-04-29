@@ -1,6 +1,6 @@
 ﻿import logging
 import time
-from scraper import zonaprop, argenprop, mercadolibre
+from scraper import zonaprop, argenprop, mercadolibre, century_21
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
@@ -16,6 +16,9 @@ def run_scraper():
     logger.info("Starting the argenprop scraper...")
     argenprop.run()
     logger.info("Finished the zonaprop scraper.")
+    logger.info("Starting the Century 21 scraper...")
+    century_21.run()
+    logger.info("Finished the Century 21 scraper.")
 
 
 def main():

@@ -220,7 +220,7 @@ def run():
         page.set_extra_http_headers(config["HEADERS"])
 
         all_properties = []
-        for current_page in tqdm(range(START_PAGE, MAX_PAGES + 1)):
+        for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping Mercado Libre"):
             page_url = build_page_url(current_page)
             soup = open_new_page(page, page_url)
             properties = extract_data_ml(soup, page, page_url)

@@ -58,24 +58,28 @@ def extract_age_from_icons(soup):
         span = li.find('span', class_='fw-bold')
         if not span:
             return None
+
         construction_text = span.get_text(strip=True)
 
-        construction_value = int(construction_text)
+        if not construction_text or construction_text.lower() == 'null':
+            return None
+
+        construction_value = safe_int(construction_text)
+
+        current_year = datetime.now().year
 
         if construction_value >= 1000:
-            current_year = datetime.now().year
             age = current_year - construction_value
-            if age < 0:
-                return None
-            return age
+            return age if age >= 0 else None
         elif 0 < construction_value < 100:
             return construction_value
         else:
             return None
 
-    except Exception as e:
+    except (ValueError, TypeError) as e:
         logger.warning(f"Could not extract age: {e}")
         return None
+
 
 
 def parse_item(url, soup, page):
@@ -230,7 +234,7 @@ def run():
 
     with sync_playwright() as p:
         all_properties = []
-        for current_page in tqdm(range(START_PAGE, MAX_PAGES + 1)):
+        for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping Century21"):
             browser = p.chromium.launch(headless=True)
             context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
 

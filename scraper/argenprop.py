@@ -219,7 +219,7 @@ def run():
 
     with sync_playwright() as p:
         all_properties = []
-        for current_page in tqdm(range(START_PAGE, MAX_PAGES + 1)):
+        for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping Argenprop"):
             browser = p.chromium.launch(headless=False)
             context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
 

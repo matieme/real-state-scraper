@@ -142,6 +142,9 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
     age = specs.get('Antigüedad', None)
     layout = specs.get('Disposición', None)
     orientation = specs.get('Orientación', None)
+    if orientation:
+        orientation = orientation.lower()
+        orientation = Constants.ORIENTATION_MAPPING.get(orientation, orientation)
 
     # Expensas
     expenses_str = specs.get('Expensas', '0 ARS')

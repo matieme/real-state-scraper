@@ -78,6 +78,9 @@ def parse_item(url, soup):
     age = complete_data.get(Constants.AGE)
     layout = clean_repeated_words(complete_data.get(Constants.LAYOUT))
     orientation = clean_repeated_words(complete_data.get(Constants.ORIENTATION))
+    if orientation:
+        orientation = orientation.lower()
+        orientation = Constants.ORIENTATION_MAPPING.get(orientation, orientation)
 
     # 7) coordenadas
     leaflet = soup.find('div', attrs={'data-latitude': True, 'data-longitude': True})

@@ -116,6 +116,9 @@ def parse_item(url, soup, page):
 
     layout = None
     orientation = None
+    if orientation:
+        orientation = orientation.lower()
+        orientation = Constants.ORIENTATION_MAPPING.get(orientation, orientation)
 
     item = Property(
         url=url,

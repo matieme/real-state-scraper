@@ -59,3 +59,38 @@
         "DISPOSITION": LAYOUT,
         "FACING": ORIENTATION
     }
+
+    ORIENTATION_MAPPING = {
+        # Norte
+        "norte": "N",
+        "n": "N",
+        "north": "N",
+        # Noreste
+        "noreste": "NE",
+        "ne": "NE",
+        "northeast": "NE",
+        # Este
+        "este": "E",
+        "e": "E",
+        "east": "E",
+        # Noroeste
+        "noroeste": "NO",
+        "no": "NO",
+        "northwest": "NO",
+        # Oeste
+        "oeste": "O",
+        "o": "O",
+        "west": "O",
+        # Sur
+        "sur": "S",
+        "s": "S",
+        "south": "S",
+        # Sureste
+        "sureste": "SE",
+        "se": "SE",
+        "southeast": "SE",
+        # Suroeste
+        "suroeste": "SO",
+        "so": "SO",
+        "southwest": "SO"
+    }

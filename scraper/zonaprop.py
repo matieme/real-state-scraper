@@ -82,6 +82,11 @@ def parse_item(url, div):
     latitude = getattr(div, 'latitude', None)
     longitude = getattr(div, 'longitude', None)
 
+    orientation = feature_data.get(Constants.ORIENTATION)
+    if orientation:
+        orientation = orientation.lower()
+        orientation = Constants.ORIENTATION_MAPPING.get(orientation, orientation)
+
     # Create Property object with organized fields
     item = Property(
         url=url,
@@ -101,7 +106,7 @@ def parse_item(url, div):
         garages=garages,
         age=DataFormatter.clean_age_data(feature_data.get(Constants.AGE)),
         layout=feature_data.get(Constants.LAYOUT),
-        orientation=feature_data.get(Constants.ORIENTATION),
+        orientation=orientation,
         location=location,
         exact_direction=exact_location,
         latitude=latitude,

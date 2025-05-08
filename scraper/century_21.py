@@ -115,6 +115,9 @@ def parse_item(url, soup, page):
     latitude, longitude = extract_lat_lon_via_click(page)
 
     layout = None
+    if layout:
+        layout = layout.lower()
+        layout = Constants.LAYOUT_MAPPING.get(layout, layout)
     orientation = None
     if orientation:
         orientation = orientation.lower()

@@ -77,6 +77,9 @@ def parse_item(url, soup):
     garages = complete_data.get(Constants.GARAGES, 0)
     age = complete_data.get(Constants.AGE)
     layout = clean_repeated_words(complete_data.get(Constants.LAYOUT))
+    if layout:
+        layout = layout.lower()
+        layout = Constants.LAYOUT_MAPPING.get(layout, layout)
     orientation = clean_repeated_words(complete_data.get(Constants.ORIENTATION))
     if orientation:
         orientation = orientation.lower()

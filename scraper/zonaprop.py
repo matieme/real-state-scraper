@@ -87,6 +87,11 @@ def parse_item(url, div):
         orientation = orientation.lower()
         orientation = Constants.ORIENTATION_MAPPING.get(orientation, orientation)
 
+    layout = feature_data.get(Constants.LAYOUT)
+    if layout:
+        layout = layout.lower()
+        layout = Constants.LAYOUT_MAPPING.get(layout, layout)
+
     # Create Property object with organized fields
     item = Property(
         url=url,
@@ -105,7 +110,7 @@ def parse_item(url, div):
         bathrooms=bathrooms,
         garages=garages,
         age=DataFormatter.clean_age_data(feature_data.get(Constants.AGE)),
-        layout=feature_data.get(Constants.LAYOUT),
+        layout=layout,
         orientation=orientation,
         location=location,
         exact_direction=exact_location,

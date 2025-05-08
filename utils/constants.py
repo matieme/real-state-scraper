@@ -94,3 +94,18 @@
         "so": "SO",
         "southwest": "SO"
     }
+
+    LAYOUT_MAPPING = {
+        # Frente
+        "frente": "Frente",
+        "f": "Frente",
+        # Contrafrente
+        "contra frente": "Contrafrente",
+        "contrafrente": "Contrafrente",
+        "contra-frente": "Contrafrente",
+        "contra": "Contrafrente",
+        "cf": "Contrafrente",
+        # Lateral
+        "lateral": "Lateral",
+        "l": "Lateral"
+    }

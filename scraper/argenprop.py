@@ -103,7 +103,7 @@ def parse_item(url, soup):
 
     # 8) armo el dict con tu clase
     item = Property(
-        url=url,
+        url=config["BASE_URL"] + url,
         source_name=source_name,
         source_identifier=source_identifier,
         scrape_date=scrape_date,

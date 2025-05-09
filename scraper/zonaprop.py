@@ -62,7 +62,7 @@ def parse_item(url, div):
     # Extract zone and address
     address = parts[0].strip() if parts else None
     location_parts = parts[1].strip().split(',') if len(parts) > 1 else []
-    
+
     # Default values for Argentina
     country = "Argentina"
     state = "Buenos Aires"
@@ -107,7 +107,7 @@ def parse_item(url, div):
 
     # Create Property object with organized fields
     item = Property(
-        url=url,
+        url=config["BASE_URL"] + url,
         source_name=source_name,
         source_identifier=source_identifier,
         scrape_date=scrape_date,

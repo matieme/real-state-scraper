@@ -103,7 +103,7 @@ def parse_item(url, soup, page):
     city = "Capital Federal"
 
     # Extract address and zone
-    full_direction = get_meta_content('direccion').strip().lower()
+    full_direction = get_meta_content('direccion').strip()
     parts = full_direction.split(',', 1)
     address = parts[0].strip() if parts else None
 

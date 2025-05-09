@@ -59,8 +59,21 @@ def parse_item(url, div):
     full_location = container[2].select_one('.section-location-property').text.strip().lower()
     parts = full_location.split(',', 1)
 
-    exact_location = parts[0].strip() if parts else None
-    location = parts[1].strip() if len(parts) > 1 else None
+    # Extract zone and address
+    address = parts[0].strip() if parts else None
+    location_parts = parts[1].strip().split(',') if len(parts) > 1 else []
+    
+    # Default values for Argentina
+    country = "Argentina"
+    state = "Buenos Aires"
+    city = "Capital Federal"
+    zone = None
+
+    # Extract zone from location parts
+    if location_parts:
+        zone = location_parts[0].strip()
+        # Remove "capital federal" from zone if present
+        zone = zone.replace("capital federal", "").strip()
 
     features = div.select('.section-icon-features-property>li')
 
@@ -112,8 +125,11 @@ def parse_item(url, div):
         age=DataFormatter.clean_age_data(feature_data.get(Constants.AGE)),
         layout=layout,
         orientation=orientation,
-        location=location,
-        exact_direction=exact_location,
+        country=country,
+        state=state,
+        city=city,
+        zone=zone,
+        address=address,
         latitude=latitude,
         longitude=longitude,
     )

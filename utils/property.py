@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 class Property:
     def __init__(self, url="", source_name=None, price_currency=None, price=None, expenses_currency=None, expenses=None,
-                 sqr_price=None, location=None, exact_direction=None, total_surface=None,
+                 sqr_price=None, country=None, state=None, city=None, zone=None, address=None, total_surface=None,
                  covered_surface=None, rooms=None, bedrooms=None, bathrooms=None, garages=None, age=None, layout=None,
                  orientation=None, latitude=None, longitude=None, source_identifier=None, scrape_date=None):
         """
@@ -36,8 +36,11 @@ class Property:
         """
         Location of the property
         """
-        self.location = location
-        self.exact_direction = exact_direction
+        self.country = country
+        self.state = state
+        self.city = city
+        self.zone = zone
+        self.address = address
         self.latitude = latitude
         self.longitude = longitude
 
@@ -71,8 +74,11 @@ class Property:
             Constants.AGE: self.age,
 
             # Location of the property
-            Constants.LOCATION: self.location,
-            Constants.EXACT_LOCATION: self.exact_direction,
+            Constants.COUNTRY: self.country,
+            Constants.STATE: self.state,
+            Constants.CITY: self.city,
+            Constants.ZONE: self.zone,
+            Constants.ADDRESS: self.address,
             Constants.LATITUDE: self.latitude,
             Constants.LONGITUDE: self.longitude,
         }
@@ -101,8 +107,11 @@ class Property:
             Constants.LAYOUT: 'layout',
             Constants.ORIENTATION: 'orientation',
             Constants.AGE: 'age',
-            Constants.LOCATION: 'location',
-            Constants.EXACT_LOCATION: 'exact_direction',
+            Constants.COUNTRY: 'country',
+            Constants.STATE: 'state',
+            Constants.CITY: 'city',
+            Constants.ZONE: 'zone',
+            Constants.ADDRESS: 'address',
             Constants.LATITUDE: 'latitude',
             Constants.LONGITUDE: 'longitude',
         }

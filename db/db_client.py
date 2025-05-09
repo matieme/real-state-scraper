@@ -71,8 +71,11 @@ class DBClient:
                     INSERT INTO properties (
                         source_name,
                         source_identifier,
-                        location,
-                        exact_direction,
+                        country,
+                        state,
+                        city,
+                        zone,
+                        address,
                         total_surface,
                         covered_surface,
                         rooms,
@@ -91,13 +94,16 @@ class DBClient:
                         expenses_currency,
                         sqr_price,
                         scrape_date
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     prop.source_name,
                     prop.source_identifier,
-                    prop.location,
-                    prop.exact_direction,
+                    prop.country,
+                    prop.state,
+                    prop.city,
+                    prop.zone,
+                    prop.address,
                     prop.total_surface,
                     prop.covered_surface,
                     prop.rooms,

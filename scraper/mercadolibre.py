@@ -107,20 +107,27 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
 
     # Ubicación y dirección exacta
     location_container = soup.select_one('div.ui-vip-location')
-    exact_direction = ''
-    location = ''
+    address = ''
+    zone = ''
 
     if location_container:
         # Obtener la dirección completa
-        address = location_container.select_one('p.ui-pdp-color--BLACK.ui-pdp-size--SMALL')
-        if address:
-            full_address = address.get_text(strip=True).lower()
-            # Obtener solo la parte antes de la primera coma
-            exact_direction = full_address.split(',')[0].strip()
-            # El resto de la dirección (después de la primera coma) se usa para la ubicación
-            location_parts = full_address.split(',')[1:]
-            if location_parts:
-                location = ','.join(location_parts).strip()
+        address_elem = location_container.select_one('p.ui-pdp-color--BLACK.ui-pdp-size--SMALL')
+        if address_elem:
+            full_address = address_elem.get_text(strip=True).lower()
+            # Split by commas and clean up
+            parts = [part.strip() for part in full_address.split(',')]
+
+            # Default values for Argentina
+            country = "Argentina"
+            state = "Buenos Aires"
+            city = "Capital Federal"
+
+            # Extract address and zone
+            if len(parts) >= 1:
+                address = parts[0]
+            if len(parts) >= 2:
+                zone = parts[1]
 
     # Extraer datos de la tabla de especificaciones
     specs = extract_specs_from_table(soup)
@@ -184,8 +191,11 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
         layout=layout,
         orientation=orientation,
         age=age,
-        location=location,
-        exact_direction=exact_direction,
+        country=country,
+        state=state,
+        city=city,
+        zone=zone,
+        address=address,
         latitude=latitude,
         longitude=longitude,
     )

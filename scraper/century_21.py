@@ -97,10 +97,20 @@ def parse_item(url, soup, page):
     expenses = None
     expenses_currency = None
 
+    # Default values for Argentina
+    country = "Argentina"
+    state = "Buenos Aires"
+    city = "Capital Federal"
+
+    # Extract address and zone
     full_direction = get_meta_content('direccion').strip().lower()
     parts = full_direction.split(',', 1)
-    exact_direction = parts[0].strip() if parts else None
-    location = (get_meta_content('municipio') or '').lower()
+    address = parts[0].strip() if parts else None
+
+    # Get zone from meta content
+    zone = get_meta_content('municipio')
+    if zone:
+        zone = zone.lower()
 
     total_surface = DataFormatter.extract_int_value(get_meta_content('MT'))
     covered_surface = DataFormatter.extract_int_value(get_meta_content('MC'))
@@ -142,8 +152,11 @@ def parse_item(url, soup, page):
         layout=layout,
         orientation=orientation,
         age=age,
-        location=location,
-        exact_direction=exact_direction,
+        country=country,
+        state=state,
+        city=city,
+        zone=zone,
+        address=address,
         latitude=latitude,
         longitude=longitude,
     )

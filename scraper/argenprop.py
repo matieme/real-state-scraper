@@ -52,7 +52,7 @@ def parse_item(url, soup):
     expenses = DataFormatter.extract_int_value(exp_elem.get_text()) if exp_elem else 0
 
     # 4) dirección exacta
-    exact_direction = (
+    address = (
         main_div.select_one('h2.titlebar__address')
         .get_text(strip=True)
         .lower()
@@ -61,7 +61,12 @@ def parse_item(url, soup):
     # 5) barrio / localidad
     loc_text = main_div.select_one('h2.titlebar__title').get_text(strip=True)
     loc_text = re.sub(r'(?i)^venta en ', '', loc_text)
-    location = loc_text.split(',')[0].strip().lower()
+    zone = loc_text.split(',')[0].strip().lower()
+
+    # Default values for Argentina
+    country = "Argentina"
+    state = "Buenos Aires"
+    city = "Capital Federal"
 
     # 6) features (rooms, baños, superficie…)
     features = main_div.select('ul.property-main-features > li')
@@ -116,8 +121,11 @@ def parse_item(url, soup):
         layout=layout,
         orientation=orientation,
         age=age,
-        location=location,
-        exact_direction=exact_direction,
+        country=country,
+        state=state,
+        city=city,
+        zone=zone,
+        address=address,
         latitude=latitude,
         longitude=longitude,
     )

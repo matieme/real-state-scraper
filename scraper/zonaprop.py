@@ -56,7 +56,7 @@ def parse_item(url, div):
         expenses_currency, expenses = DataFormatter.clean_price_and_currency(
             extract_currency_amount(expenses_element.text.strip()))
 
-    full_location = container[2].select_one('.section-location-property').text.strip().lower()
+    full_location = container[2].select_one('.section-location-property').text.strip()
     parts = full_location.split(',', 1)
 
     # Extract zone and address

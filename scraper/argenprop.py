@@ -55,13 +55,12 @@ def parse_item(url, soup):
     address = (
         main_div.select_one('h2.titlebar__address')
         .get_text(strip=True)
-        .lower()
     )
 
     # 5) barrio / localidad
     loc_text = main_div.select_one('h2.titlebar__title').get_text(strip=True)
     loc_text = re.sub(r'(?i)^venta en ', '', loc_text)
-    zone = loc_text.split(',')[0].strip().lower()
+    zone = loc_text.split(',')[0].strip()
 
     # Default values for Argentina
     country = "Argentina"

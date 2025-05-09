@@ -114,7 +114,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
         # Obtener la dirección completa
         address_elem = location_container.select_one('p.ui-pdp-color--BLACK.ui-pdp-size--SMALL')
         if address_elem:
-            full_address = address_elem.get_text(strip=True).lower()
+            full_address = address_elem.get_text(strip=True)
             # Split by commas and clean up
             parts = [part.strip() for part in full_address.split(',')]
 

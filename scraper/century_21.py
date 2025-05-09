@@ -109,8 +109,6 @@ def parse_item(url, soup, page):
 
     # Get zone from meta content
     zone = get_meta_content('municipio')
-    if zone:
-        zone = zone.lower()
 
     total_surface = DataFormatter.extract_int_value(get_meta_content('MT'))
     covered_surface = DataFormatter.extract_int_value(get_meta_content('MC'))

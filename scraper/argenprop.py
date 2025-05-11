@@ -55,7 +55,6 @@ def extract_amenities(soup):
     return list(set(found_amenities))
 
 
-
 def parse_item(url, soup):
     # Extraer ID de la propiedad
     property_id = extract_property_id(url)
@@ -287,5 +286,3 @@ def run():
                 continue
 
         scraper_service.close()
-
-

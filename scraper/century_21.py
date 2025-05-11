@@ -91,6 +91,23 @@ def extract_amenities(soup):
     return list(set(found_amenities))
 
 
+def extract_surface_value(data_str: str) -> int:
+    """
+    Extrae la parte entera de un número en formato '118.590000' -> 118.
+    Se usa para datos de Century21 donde el valor decimal no representa centavos.
+
+    Args:
+        data_str (str): String con el número (con punto como decimal visual).
+
+    Returns:
+        int: Parte entera como número.
+    """
+    try:
+        integer_part = str(data_str).split('.')[0]
+        return int(integer_part)
+    except (ValueError, AttributeError):
+        return 0
+
 
 def parse_item(url, soup, page):
     property_id = extract_property_id(url)
@@ -120,8 +137,11 @@ def parse_item(url, soup, page):
     # Get zone from meta content
     zone = get_meta_content('municipio')
 
-    total_surface = DataFormatter.extract_int_value(get_meta_content('MT'))
-    covered_surface = DataFormatter.extract_int_value(get_meta_content('MC'))
+    total_surface = extract_surface_value(get_meta_content('MT'))
+    covered_surface = extract_surface_value(get_meta_content('MC'))
+    if total_surface == 0 and covered_surface > 0:
+        total_surface = covered_surface
+
     rooms = extract_rooms_from_icons(soup)
     bedrooms = safe_int(get_meta_content('recamaras') or 1)
     bathrooms = safe_int(get_meta_content('banio') or 0)
@@ -291,5 +311,5 @@ def run():
                 except:
                     pass
                 continue
-    
+
     scraper_service.close()

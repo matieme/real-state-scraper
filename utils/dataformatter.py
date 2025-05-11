@@ -54,13 +54,13 @@ class DataFormatter:
         """
         if not age:
             return None
-            
+
         age = str(age).lower().strip()
-        
+
         # Handle "A estrenar" case
         if "estrenar" in age:
             return 0
-            
+
         # Try to extract year if it's a year format
         try:
             # If it's a year (e.g., "1990")
@@ -68,19 +68,19 @@ class DataFormatter:
                 year = int(age)
                 current_year = datetime.now().year
                 return current_year - year
-                
+
             # If it contains "años" or similar
             if "año" in age or "años" in age:
                 # Extract numbers from string
                 numbers = ''.join(filter(str.isdigit, age))
                 if numbers:
                     return int(numbers)
-                    
+
             # If it's just a number
             if age.isdigit():
                 return int(age)
-                
+
         except (ValueError, TypeError):
             pass
-            
+
         return None

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 class Property:
     def __init__(self, url="", source_name=None, price_currency=None, price=None, expenses_currency=None, expenses=None,
                  sqr_price=None, country=None, state=None, city=None, zone=None, address=None, total_surface=None,
-                 covered_surface=None, rooms=None, bedrooms=None, bathrooms=None, garages=None, age=None, layout=None,
+                 covered_surface=None, rooms=None, bedrooms=None, bathrooms=None, garages=None, amenities=None, age=None, layout=None,
                  orientation=None, latitude=None, longitude=None, source_identifier=None, scrape_date=None):
         """
         Identification of the property
@@ -30,6 +30,7 @@ class Property:
         self.bedrooms = bedrooms
         self.bathrooms = bathrooms
         self.garages = garages
+        self.amenities = amenities or []
         self.layout = layout
         self.orientation = orientation
         self.age = age
@@ -69,6 +70,7 @@ class Property:
             Constants.BEDROOMS: self.bedrooms,
             Constants.BATHROOMS: self.bathrooms,
             Constants.GARAGES: self.garages,
+            Constants.AMENITIES: self.amenities,
             Constants.LAYOUT: self.layout,
             Constants.ORIENTATION: self.orientation,
             Constants.AGE: self.age,
@@ -104,6 +106,7 @@ class Property:
             Constants.BEDROOMS: 'bedrooms',
             Constants.BATHROOMS: 'bathrooms',
             Constants.GARAGES: 'garages',
+            Constants.AMENITIES: 'amenities',
             Constants.LAYOUT: 'layout',
             Constants.ORIENTATION: 'orientation',
             Constants.AGE: 'age',

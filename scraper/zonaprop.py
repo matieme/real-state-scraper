@@ -35,6 +35,27 @@ def extract_property_id(url: str) -> str:
     return match.group(1) if match else ''
 
 
+def extract_amenities(soup):
+    """
+    Extrae amenities del HTML de una propiedad de Zonaprop usando regex específicos por amenity.
+    """
+    found = []
+    elements = soup.find_all(['li', 'span', 'div'])
+
+    if not elements:
+        return found
+
+    text_elements = [el.get_text(strip=True).lower() for el in elements if el.get_text(strip=True)]
+
+    for amenity, patterns in Constants.AMENITY_PATTERNS.items():
+        for text in text_elements:
+            if any(re.search(pat, text) for pat in patterns):
+                found.append(amenity)
+                break  # evita duplicados
+
+    return list(set(found))
+
+
 def parse_item(url, div):
     """
     Extrae los datos clave de la ficha de un inmueble en Zonaprop.
@@ -105,6 +126,9 @@ def parse_item(url, div):
         layout = layout.lower()
         layout = Constants.LAYOUT_MAPPING.get(layout, layout)
 
+    # Extract amenities
+    amenities = extract_amenities(div)
+
     # Create Property object with organized fields
     item = Property(
         url=config["BASE_URL"] + url,
@@ -122,6 +146,7 @@ def parse_item(url, div):
         bedrooms=bedrooms,
         bathrooms=bathrooms,
         garages=garages,
+        amenities=amenities,
         age=DataFormatter.clean_age_data(feature_data.get(Constants.AGE)),
         layout=layout,
         orientation=orientation,
@@ -131,7 +156,7 @@ def parse_item(url, div):
         zone=zone,
         address=address,
         latitude=latitude,
-        longitude=longitude,
+        longitude=longitude
     )
     return item.to_dict()
 
@@ -189,7 +214,7 @@ def extract_data(soup, page, page_link):
 
     if not container_div:
         logger.warning("Failed to find postings-container after retries.")
-        return pd.DataFrame()
+        return []
 
     results = []
     with ThreadPoolExecutor() as executor:
@@ -206,12 +231,13 @@ def extract_data(soup, page, page_link):
                 item_container = future.result()
                 if item_container:
                     logger.info(url)
-                    item = parse_item(url, item_container)
-                    results.append(item)
+                    item_dict = parse_item(url, item_container)
+                    prop = Property.from_dict(item_dict)
+                    results.append(prop)
             except Exception as e:
                 logger.error(e)
 
-    return pd.DataFrame(results)
+    return results
 
 
 async def get_child_item_data(url):
@@ -294,13 +320,10 @@ def run():
 
             # Extraer propiedades de la página actual
             properties = extract_data(soup, page, page_link)
-            all_properties.extend(properties.to_dict('records'))
+            all_properties.extend(properties)
 
-            browser.close()  # Close browser after processing each page
-            time.sleep(3)  # Add a delay after closing the browser before opening a new one for the next URL
-
-        # Convertir los diccionarios a objetos Property
-        property_objects = [Property.from_dict(prop) for prop in all_properties]
+            browser.close()
+            time.sleep(3)
 
         # Guardar en la base de datos
-        scraper_service.process_scraped_items(property_objects)
+        scraper_service.process_scraped_items(all_properties)

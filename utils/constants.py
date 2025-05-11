@@ -25,6 +25,24 @@
     ORIENTATION = "Orientation"
     LATITUDE = "Latitude"
     LONGITUDE = "Longitude"
+    AMENITIES = "Amenities"
+
+    AMENITY_PATTERNS = {
+        "Pileta": [r"\bpileta\b", r"\bpileta climatizada\b"],
+        "Parrilla": [r"\bparrilla\b"],
+        "Encargado / Vigilancia": [r"\bencargado\b", r"\bvigilancia\b", r"\bseguridad\b"],
+        "Ascensor": [r"\bascensor\b"],
+        "Cancha de deportes": [r"\bcancha\b", r"\bcancha de deportes\b"],
+        "Gimnasio": [r"\bgimnasio\b", r"\bgym\b"],
+        "Laundry": [r"\blaundry\b", r"\blavadero\b"],
+        "Quincho": [r"\bquincho\b"],
+        "Solarium": [r"\bsolarium\b"],
+        "SUM": [r"\bsum\b", r"\bs\.u\.m\b", r"\bsalon de usos multiples\b"],
+        "Balcón": [r"\bbalc[oó]n\b"],
+        "Aire acondicionado": [r"\baire\b", r"\bair\s?conditioner\b"],
+        "Calefacción": [r"\bcalefacci[oó]n\b", r"\bestufa\b", r"\bradiador\b"],
+        "Grupo electrógeno": [r"\bgrupo electr[oó]geno\b", r"\bgenerador\b"]
+    }
 
     ARGENPROP_FEATURE_MAPPING = {
         "icono-superficie_total": TOTAL_SURFACE,

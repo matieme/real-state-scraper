@@ -67,6 +67,31 @@ def extract_age_from_icons(soup):
         return None
 
 
+def extract_amenities(soup):
+    """
+    Extrae amenities del inmueble en Century21 comparando el texto de cada div dentro de
+    'card-body pt-0' contra los patrones de AMENITY_PATTERNS.
+    """
+    found_amenities = []
+    container = soup.select_one('div.card-body.pt-0')
+
+    if not container:
+        return found_amenities
+
+    inner_divs = container.find_all('div')
+
+    for div in inner_divs:
+        text = div.get_text(strip=True).lower()
+
+        for amenity, patterns in Constants.AMENITY_PATTERNS.items():
+            for pattern in patterns:
+                if re.search(pattern, text):
+                    found_amenities.append(amenity)
+                    break
+
+    return list(set(found_amenities))
+
+
 
 def parse_item(url, soup, page):
     property_id = extract_property_id(url)
@@ -117,6 +142,9 @@ def parse_item(url, soup, page):
         orientation = orientation.lower()
         orientation = Constants.ORIENTATION_MAPPING.get(orientation, orientation)
 
+    # Extract amenities
+    amenities = extract_amenities(soup)
+
     item = Property(
         url=url,
         source_name=source_name,
@@ -143,6 +171,7 @@ def parse_item(url, soup, page):
         address=address,
         latitude=latitude,
         longitude=longitude,
+        amenities=amenities
     )
 
     return item.to_dict()
@@ -194,12 +223,13 @@ def extract_data(soup):
         try:
             url = f'{config["BASE_URL"]}{href}'
             soup, page = get_child_item_data(href)
-            item = parse_item(url, soup, page)
-            results.append(item)
+            item_dict = parse_item(url, soup, page)
+            prop = Property.from_dict(item_dict)
+            results.append(prop)
         except Exception as e:
             logger.error(e)
 
-    return pd.DataFrame(results)
+    return results
 
 
 def get_child_item_data(url):
@@ -246,14 +276,12 @@ def run():
             page, soup = open_new_page(page_link, 'a[href^="/propiedad/"]')
 
             properties = extract_data(soup)
-            all_properties.extend(properties.to_dict('records'))
+            all_properties.extend(properties)
 
             browser.close()
             time.sleep(3)
 
-        property_objects = [Property.from_dict(prop) for prop in all_properties]
-
-        scraper_service.process_scraped_items(property_objects)
+        scraper_service.process_scraped_items(all_properties)
 
 
 if __name__ == "__main__":

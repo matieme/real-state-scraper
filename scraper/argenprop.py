@@ -32,6 +32,30 @@ def extract_property_id(url: str) -> str:
     return match.group(1) if match else ''
 
 
+def extract_amenities(soup):
+    """
+    Extrae las amenities del inmueble en Argenprop desde div.property-description,
+    recorriendo todos los <li class="property-features-item"> encontrados dentro de secciones.
+    """
+    found_amenities = []
+    description_container = soup.select_one('div.property-description')
+
+    if not description_container:
+        return found_amenities
+
+    items = description_container.select('li.property-features-item')
+
+    for item in items:
+        text = item.get_text(strip=True).lower()
+        for amenity, patterns in Constants.AMENITY_PATTERNS.items():
+            if any(re.search(pattern, text) for pattern in patterns):
+                found_amenities.append(amenity)
+                break
+
+    return list(set(found_amenities))
+
+
+
 def parse_item(url, soup):
     # Extraer ID de la propiedad
     property_id = extract_property_id(url)
@@ -100,6 +124,9 @@ def parse_item(url, soup):
     else:
         latitude = longitude = None
 
+    # Extract amenities
+    amenities = extract_amenities(soup)
+
     # 8) armo el dict con tu clase
     item = Property(
         url=config["BASE_URL"] + url,
@@ -127,6 +154,7 @@ def parse_item(url, soup):
         address=address,
         latitude=latitude,
         longitude=longitude,
+        amenities=amenities
     )
     return item.to_dict()
 
@@ -177,13 +205,14 @@ def extract_data(soup, page, page_link):
         try:
             if tag:
                 url = tag.find('a')['href']
-                item = parse_item(url, get_child_item_data(url))
-                results.append(item)
+                item_dict = parse_item(url, get_child_item_data(url))
+                prop = Property.from_dict(item_dict)
+                results.append(prop)
         except Exception as e:
             logger.error(e)
             pass
 
-    return pd.DataFrame(results)
+    return results
 
 
 def get_child_item_data(url):
@@ -241,13 +270,10 @@ def run():
 
             # Extraer propiedades de la página actual
             properties = extract_data(soup, page, page_link)
-            all_properties.extend(properties.to_dict('records'))
+            all_properties.extend(properties)
 
             browser.close()  # Close browser after processing each page
             time.sleep(3)  # Add a delay after closing the browser before opening a new one for the next URL
 
-        # Convertir los diccionarios a objetos Property
-        property_objects = [Property.from_dict(prop) for prop in all_properties]
-
         # Guardar en la base de datos
-        scraper_service.process_scraped_items(property_objects)
+        scraper_service.process_scraped_items(all_properties)

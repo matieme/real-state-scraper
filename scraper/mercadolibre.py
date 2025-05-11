@@ -78,6 +78,45 @@ def extract_property_id(url: str) -> str:
     return match.group(1) if match else ''
 
 
+def extract_amenities(soup):
+    """
+    Extrae amenities del HTML de MercadoLibre recorriendo todas las tablas dentro del bloque
+    ui-vpp-striped-specs, y chequeando que el valor asociado al amenity sea "Sí".
+    """
+    found_amenities = []
+    specs_containers = soup.select('div.ui-vpp-striped-specs')
+
+    if not specs_containers:
+        return found_amenities
+
+    for container in specs_containers:
+        tables = container.select('div.ui-vpp-striped-specs__table')
+
+        for table in tables:
+            table_body = table.select_one('tbody.andes-table__body')
+            if not table_body:
+                continue
+
+            rows = table_body.select('tr.andes-table__row')
+            for row in rows:
+                th = row.find('th')
+                td = row.find('td')
+
+                if not th or not td:
+                    continue
+
+                label = th.get_text(strip=True).lower()
+                value = td.get_text(strip=True).lower()
+
+                if value in ['sí', 'si']:
+                    for amenity, patterns in Constants.AMENITY_PATTERNS.items():
+                        if any(re.search(pattern, label) for pattern in patterns):
+                            found_amenities.append(amenity)
+                            break
+
+    return list(set(found_amenities))
+
+
 def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
     """
     Extrae los datos clave de la ficha de un inmueble en MercadoLibre.
@@ -171,6 +210,9 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
         if center:
             latitude, longitude = center.split(',')
 
+    # Extract amenities
+    amenities = extract_amenities(soup)
+
     # Create Property object with organized fields
     item = Property(
         url=url,
@@ -188,6 +230,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
         bedrooms=bedrooms,
         bathrooms=bathrooms,
         garages=garages,
+        amenities=amenities,
         layout=layout,
         orientation=orientation,
         age=age,
@@ -202,7 +245,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
     return item.to_dict()
 
 
-def extract_data_ml(soup: BeautifulSoup, page, page_link: str) -> pd.DataFrame:
+def extract_data_ml(soup: BeautifulSoup, page, page_link: str):
     """
     Extrae el listado de enlaces y realiza parse_item_ml en cada ficha.
     """
@@ -217,11 +260,13 @@ def extract_data_ml(soup: BeautifulSoup, page, page_link: str) -> pd.DataFrame:
             link = tag.find('a', href=True)['href']
             child_soup = open_new_page(page, link)
             time.sleep(1)
-            item = parse_item_ml(link, child_soup)
-            results.append(item)
+            item_dict = parse_item_ml(link, child_soup)
+            prop = Property.from_dict(item_dict)
+            results.append(prop)
         except Exception as e:
             logger.error(e)
-    return pd.DataFrame(results)
+
+    return results
 
 
 def run():
@@ -240,13 +285,10 @@ def run():
             page_url = build_page_url(current_page)
             soup = open_new_page(page, page_url)
             properties = extract_data_ml(soup, page, page_url)
-            all_properties.extend(properties.to_dict('records'))
+            all_properties.extend(properties)
             time.sleep(2)
 
         browser.close()
 
-        # Convertir los diccionarios a objetos Property
-        property_objects = [Property.from_dict(prop) for prop in all_properties]
-
         # Guardar en la base de datos
-        scraper_service.process_scraped_items(property_objects)
+        scraper_service.process_scraped_items(all_properties)

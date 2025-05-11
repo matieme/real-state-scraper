@@ -82,6 +82,7 @@ class DBClient:
                         bedrooms,
                         bathrooms,
                         garages,
+                        amenities,
                         age,
                         layout,
                         orientation,
@@ -94,7 +95,7 @@ class DBClient:
                         expenses_currency,
                         sqr_price,
                         scrape_date
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     prop.source_name,
@@ -110,6 +111,7 @@ class DBClient:
                     prop.bedrooms,
                     prop.bathrooms,
                     prop.garages,
+                    prop.amenities,
                     prop.age,
                     prop.layout,
                     prop.orientation,

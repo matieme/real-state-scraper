@@ -15,8 +15,8 @@ from services.scraper_service import ScraperService
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
-START_PAGE = 2
-MAX_PAGES = 10
+START_PAGE = 1
+MAX_PAGES = 3
 RETRIES = 3
 
 context = None
@@ -241,8 +241,7 @@ def open_new_page(page_link):
 
     page.set_extra_http_headers(config["HEADERS"])
 
-    logger.info(page_link)
-
+    logger.info(f"Opening {page_link}")
     try:
         page.goto(page_link)
     except:
@@ -260,20 +259,33 @@ def run():
     scraper_service = ScraperService()
 
     with sync_playwright() as p:
-        all_properties = []
         for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping Argenprop"):
-            browser = p.chromium.launch(headless=False)
-            context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
+            try:
+                browser = p.chromium.launch(headless=False)
+                context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
 
-            page_link = f'{config["BASE_URL"]}/departamentos/venta/capital-federal/pagina-{current_page}'
-            page, soup = open_new_page(page_link)
+                page_link = f'{config["BASE_URL"]}/departamentos/venta/capital-federal/pagina-{current_page}'
+                page, soup = open_new_page(page_link)
 
-            # Extraer propiedades de la página actual
-            properties = extract_data(soup, page, page_link)
-            all_properties.extend(properties)
+                properties = extract_data(soup, page, page_link)
 
-            browser.close()  # Close browser after processing each page
-            time.sleep(3)  # Add a delay after closing the browser before opening a new one for the next URL
+                if properties:
+                    scraper_service.process_scraped_items(properties)
+                    logger.info(f"✅ Page {current_page}: {len(properties)} properties saved.")
+                else:
+                    logger.warning(f"⚠️ Page {current_page}: no properties found.")
 
-        # Guardar en la base de datos
-        scraper_service.process_scraped_items(all_properties)
+                browser.close()
+                time.sleep(3)
+
+            except Exception as e:
+                logger.error(f"❌ Error processing page {current_page}: {e}")
+                try:
+                    browser.close()
+                except:
+                    pass
+                continue
+
+        scraper_service.close()
+
+

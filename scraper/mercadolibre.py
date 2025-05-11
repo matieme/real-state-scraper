@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger()
 
 START_PAGE = 1
-MAX_PAGES = 10
+MAX_PAGES = 3
 RETRIES = 3
 RESULTS_PER_PAGE = 48
 
@@ -39,7 +39,7 @@ def open_new_page(page, url: str) -> BeautifulSoup:
     """
     Abre una URL en Playwright y retorna el Soup.
     """
-    logger.info(f"Abriendo {url}")
+    logger.info(f"Opening {url}")
     try:
         page.goto(url)
     except Exception:
@@ -251,7 +251,7 @@ def extract_data_ml(soup: BeautifulSoup, page, page_link: str):
     """
     container = soup.find('ol', class_='ui-search-layout')
     if not container:
-        logger.warning("No se encontró el listado de inmuebles.")
+        logger.warning("No property listing found.")
         return pd.DataFrame()
 
     results = []
@@ -280,15 +280,28 @@ def run():
         page = context.new_page()
         page.set_extra_http_headers(config["HEADERS"])
 
-        all_properties = []
         for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping Mercado Libre"):
-            page_url = build_page_url(current_page)
-            soup = open_new_page(page, page_url)
-            properties = extract_data_ml(soup, page, page_url)
-            all_properties.extend(properties)
-            time.sleep(2)
+            try:
+                page_url = build_page_url(current_page)
+                soup = open_new_page(page, page_url)
+                properties = extract_data_ml(soup, page, page_url)
+
+                if properties:
+                    scraper_service.process_scraped_items(properties)
+                    logger.info(f"✅ Page {current_page}: {len(properties)} properties saved.")
+                else:
+                    logger.warning(f"⚠️ Page {current_page}: no properties found.")
+
+                time.sleep(2)
+
+            except Exception as e:
+                logger.error(f"❌ Error processing page {current_page}: {e}")
+                try:
+                    browser.close()
+                except:
+                    pass
+                continue
 
         browser.close()
+        scraper_service.close()
 
-        # Guardar en la base de datos
-        scraper_service.process_scraped_items(all_properties)

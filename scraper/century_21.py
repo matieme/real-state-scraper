@@ -1,6 +1,5 @@
 ﻿from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
-import pandas as pd
 import time
 import re
 from tqdm import tqdm
@@ -16,7 +15,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger()
 
 START_PAGE = 1
-MAX_PAGES = 1
+MAX_PAGES = 3
 RETRIES = 3
 
 context = None
@@ -245,8 +244,7 @@ def open_new_page(page_link, selector_to_wait):
 
     page.set_extra_http_headers(config["HEADERS"])
 
-    logger.info(page_link)
-
+    logger.info(f"Opening {page_link}")
     try:
         page.goto(page_link)
     except:
@@ -266,23 +264,32 @@ def run():
     scraper_service = ScraperService()
 
     with sync_playwright() as p:
-        all_properties = []
         for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping Century21"):
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
+            try:
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
 
-            page_link = f'{config["BASE_URL"]}{config["LISTING_URL"].format(current_page)}'
-            time.sleep(1)
-            page, soup = open_new_page(page_link, 'a[href^="/propiedad/"]')
+                page_link = f'{config["BASE_URL"]}{config["LISTING_URL"].format(current_page)}'
+                time.sleep(1)
+                page, soup = open_new_page(page_link, 'a[href^="/propiedad/"]')
 
-            properties = extract_data(soup)
-            all_properties.extend(properties)
+                properties = extract_data(soup)
 
-            browser.close()
-            time.sleep(3)
+                if properties:
+                    scraper_service.process_scraped_items(properties)
+                    logger.info(f"✅ Page {current_page}: {len(properties)} properties saved.")
+                else:
+                    logger.warning(f"⚠️ Page {current_page}: no properties found.")
 
-        scraper_service.process_scraped_items(all_properties)
+                browser.close()
+                time.sleep(3)
 
-
-if __name__ == "__main__":
-    run()
+            except Exception as e:
+                logger.error(f"❌ Error processing page {current_page}: {e}")
+                try:
+                    browser.close()
+                except:
+                    pass
+                continue
+    
+    scraper_service.close()

@@ -146,7 +146,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
     garages = DataFormatter.extract_int_value(specs.get('Cocheras', '0'))
 
     # Otros detalles
-    age = specs.get('Antigüedad', None)
+    age = DataFormatter.clean_age_data(specs.get('Antigüedad', None))
     layout = specs.get('Disposición', None)
     if layout:
         layout = layout.lower()

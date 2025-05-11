@@ -60,21 +60,7 @@ def extract_age_from_icons(soup):
             return None
 
         construction_text = span.get_text(strip=True)
-
-        if not construction_text or construction_text.lower() == 'null':
-            return None
-
-        construction_value = safe_int(construction_text)
-
-        current_year = datetime.now().year
-
-        if construction_value >= 1000:
-            age = current_year - construction_value
-            return age if age >= 0 else None
-        elif 0 < construction_value < 100:
-            return construction_value
-        else:
-            return None
+        return DataFormatter.clean_age_data(construction_text)
 
     except (ValueError, TypeError) as e:
         logger.warning(f"Could not extract age: {e}")

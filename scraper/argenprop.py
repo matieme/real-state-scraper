@@ -79,7 +79,7 @@ def parse_item(url, soup):
     bedrooms = complete_data.get(Constants.BEDROOMS, 0)
     bathrooms = complete_data.get(Constants.BATHROOMS, 0)
     garages = complete_data.get(Constants.GARAGES, 0)
-    age = complete_data.get(Constants.AGE)
+    age = DataFormatter.clean_age_data(complete_data.get(Constants.AGE))
     layout = clean_repeated_words(complete_data.get(Constants.LAYOUT))
     if layout:
         layout = layout.lower()

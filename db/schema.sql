@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS properties (
     garages INTEGER,
     layout TEXT,
     orientation TEXT,
-    age TEXT,
+    age INTEGER,
     country TEXT DEFAULT 'Argentina',
     state TEXT DEFAULT 'Buenos Aires',
     city TEXT DEFAULT 'Capital Federal',

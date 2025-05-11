@@ -46,22 +46,41 @@ class DataFormatter:
 
     @staticmethod
     def clean_age_data(age):
-        """Clean age data, handling special cases like 'A estrenar'.
-        
-        Args:
-            age: The age value to clean. Can be a number or string.
-            
-        Returns:
-            int: 0 if the property is new ('A estrenar'), the numeric age otherwise.
         """
-        if isinstance(age, str) and 'estrenar' in age.lower():
+        Clean and convert age data to integer.
+        Returns the number of years of the property.
+        Returns 0 for new properties ("A estrenar").
+        Returns None if age cannot be determined.
+        """
+        if not age:
+            return None
+            
+        age = str(age).lower().strip()
+        
+        # Handle "A estrenar" case
+        if "estrenar" in age:
             return 0
-
-        if isinstance(age, (int, float)):
-            current_year = datetime.now().year
-            if 0 < age <= 1000:  # Direct age in years
-                return age
-            elif 1000 < age < 10000:  # Year of construction
-                return current_year - age
-
-        return 0  # Default case for invalid/unknown age
+            
+        # Try to extract year if it's a year format
+        try:
+            # If it's a year (e.g., "1990")
+            if len(age) == 4 and age.isdigit():
+                year = int(age)
+                current_year = datetime.now().year
+                return current_year - year
+                
+            # If it contains "años" or similar
+            if "año" in age or "años" in age:
+                # Extract numbers from string
+                numbers = ''.join(filter(str.isdigit, age))
+                if numbers:
+                    return int(numbers)
+                    
+            # If it's just a number
+            if age.isdigit():
+                return int(age)
+                
+        except (ValueError, TypeError):
+            pass
+            
+        return None

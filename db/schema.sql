@@ -1,3 +1,6 @@
+-- Enable PostGIS extension
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 -- Tabla principal de propiedades
 CREATE TABLE IF NOT EXISTS properties (
     id SERIAL PRIMARY KEY,
@@ -27,6 +30,7 @@ CREATE TABLE IF NOT EXISTS properties (
     address TEXT,
     latitude NUMERIC,
     longitude NUMERIC,
+    location GEOGRAPHY(POINT, 4326),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(source_name, source_identifier)

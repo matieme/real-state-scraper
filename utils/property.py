@@ -5,7 +5,7 @@ class Property:
     def __init__(self, url="", source_name=None, price_currency=None, price=None, expenses_currency=None, expenses=None,
                  sqr_price=None, country=None, state=None, city=None, zone=None, address=None, total_surface=None,
                  covered_surface=None, rooms=None, bedrooms=None, bathrooms=None, garages=None, amenities=None, age=None, layout=None,
-                 orientation=None, latitude=None, longitude=None, source_identifier=None, scrape_date=None):
+                 orientation=None, latitude=None, longitude=None, location=None, source_identifier=None, scrape_date=None):
         """
         Identification of the property
         """
@@ -44,6 +44,7 @@ class Property:
         self.address = address
         self.latitude = latitude
         self.longitude = longitude
+        self.location = location
 
     def to_dict(self):
         """
@@ -83,6 +84,7 @@ class Property:
             Constants.ADDRESS: self.address,
             Constants.LATITUDE: self.latitude,
             Constants.LONGITUDE: self.longitude,
+            Constants.LOCATION: self.location,
         }
 
     @classmethod
@@ -117,6 +119,7 @@ class Property:
             Constants.ADDRESS: 'address',
             Constants.LATITUDE: 'latitude',
             Constants.LONGITUDE: 'longitude',
+            Constants.LOCATION: 'location',
         }
         init_kwargs = {FIELD_MAPPING[k]: v for k, v in data.items() if k in FIELD_MAPPING}
         return cls(**init_kwargs)

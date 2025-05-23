@@ -150,6 +150,7 @@ def parse_item(url, soup, page):
     age = extract_age_from_icons(soup)
 
     latitude, longitude = extract_lat_lon_via_click(page)
+    location = f'POINT({longitude} {latitude})' if latitude and longitude else None
 
     layout = None
     if layout:
@@ -189,6 +190,7 @@ def parse_item(url, soup, page):
         address=address,
         latitude=latitude,
         longitude=longitude,
+        location=location,
         amenities=amenities
     )
 

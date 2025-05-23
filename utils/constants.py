@@ -25,6 +25,7 @@
     ORIENTATION = "Orientation"
     LATITUDE = "Latitude"
     LONGITUDE = "Longitude"
+    LOCATION = "Location"
     AMENITIES = "Amenities"
 
     AMENITY_PATTERNS = {

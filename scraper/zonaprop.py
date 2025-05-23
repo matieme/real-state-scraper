@@ -19,7 +19,7 @@ logger = logging.getLogger()
 
 # Global constants
 START_PAGE = 1
-MAX_PAGES = 3
+MAX_PAGES = 1
 RETRIES = 3
 
 context = None
@@ -110,6 +110,7 @@ def parse_item(url, div):
     # Get latitude and longitude from the div object (added by get_child_item_data)
     latitude = getattr(div, 'latitude', None)
     longitude = getattr(div, 'longitude', None)
+    location = f'POINT({longitude} {latitude})' if latitude and longitude else None
 
     orientation = feature_data.get(Constants.ORIENTATION)
     if orientation:
@@ -151,7 +152,8 @@ def parse_item(url, div):
         zone=zone,
         address=address,
         latitude=latitude,
-        longitude=longitude
+        longitude=longitude,
+        location=location,
     )
     return item.to_dict()
 

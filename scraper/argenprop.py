@@ -121,8 +121,9 @@ def parse_item(url, soup):
         raw_lon = leaflet.get('data-longitude', '')
         latitude = raw_lat.replace(',', '.')
         longitude = raw_lon.replace(',', '.')
+        location = f'POINT({longitude} {latitude})'
     else:
-        latitude = longitude = None
+        latitude = longitude = location = None
 
     # Extract amenities
     amenities = extract_amenities(soup)
@@ -154,6 +155,7 @@ def parse_item(url, soup):
         address=address,
         latitude=latitude,
         longitude=longitude,
+        location=location,
         amenities=amenities
     )
     return item.to_dict()

@@ -201,7 +201,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
     expenses_currency = 'ARS'
 
     # Coordenadas desde el mapa estático
-    latitude = longitude = None
+    latitude = longitude = location = None
     map_img = soup.select_one('img.ui-pdp-image[src*="staticmap"]')
     if map_img:
         src = map_img['src']
@@ -209,6 +209,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
         center = params.get('center', [''])[0]
         if center:
             latitude, longitude = center.split(',')
+            location = f'POINT({longitude} {latitude})'
 
     # Extract amenities
     amenities = extract_amenities(soup)
@@ -241,6 +242,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
         address=address,
         latitude=latitude,
         longitude=longitude,
+        location=location,
     )
     return item.to_dict()
 

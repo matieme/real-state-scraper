@@ -88,6 +88,7 @@ class DBClient:
                         orientation,
                         latitude,
                         longitude,
+                        location,
                         url,
                         listing_price_amount,
                         listing_price_currency,
@@ -95,7 +96,7 @@ class DBClient:
                         expenses_currency,
                         sqr_price,
                         scrape_date
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     prop.source_name,
@@ -117,6 +118,7 @@ class DBClient:
                     prop.orientation,
                     prop.latitude,
                     prop.longitude,
+                    prop.location,
                     prop.url,
                     prop.price,
                     prop.price_currency,

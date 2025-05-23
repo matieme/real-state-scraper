@@ -23,6 +23,8 @@ MAX_PAGES = 3
 RETRIES = 3
 
 context = None
+config = None
+global_zone_state = ""
 
 
 def extract_property_id(url: str) -> str:
@@ -85,15 +87,9 @@ def parse_item(url, div):
 
     # Default values for Argentina
     country = "Argentina"
-    state = "Buenos Aires"
-    city = "Capital Federal"
-    zone = None
-
-    # Extract zone from location parts
-    if location_parts:
-        zone = location_parts[0].strip()
-        # Remove "capital federal" from zone if present
-        zone = zone.replace("capital federal", "").strip()
+    state = global_zone_state
+    city = location_parts[-1].strip() if len(location_parts) >= 1 else None
+    zone = location_parts[-2].strip() if len(location_parts) >= 2 else None
 
     features = div.select('.section-icon-features-property>li')
 
@@ -302,37 +298,42 @@ def run_async_in_thread(async_func, *args):
 def run():
     global context
     global config
+    global global_zone_state
 
     config = load_config("scraper/configs/zonaprop-config.json")
     scraper_service = ScraperService()
 
     with sync_playwright() as p:
-        for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping ZonaProp"):
-            try:
-                browser = p.chromium.launch(headless=False)
-                context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
-
-                page_link = f'{config["BASE_URL"]}/inmuebles-venta-capital-federal-pagina-{current_page}.html'
-                time.sleep(1)
-                page, soup = open_new_page(page_link)
-
-                properties = extract_data(soup, page, page_link)
-
-                if properties:
-                    scraper_service.process_scraped_items(properties)
-                    logger.info(f"✅ Page {current_page}: {len(properties)} properties saved.")
-                else:
-                    logger.warning(f"⚠️ Page {current_page}: no properties found.")
-
-                browser.close()
-                time.sleep(3)
-
-            except Exception as e:
-                logger.error(f"❌ Error processing page {current_page}: {e}")
+        for zone in config["ZONES"]:
+            logger.info(f"Starting scraping for zone: {zone['slug']}")
+            for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES),
+                                     desc=f"Scraping ZonaProp - {zone['slug']}"):
                 try:
+                    browser = p.chromium.launch(headless=False)
+                    context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
+
+                    page_link = f'{config["BASE_URL"]}{config["LISTING_URL"]}{zone["slug"]}-pagina-{current_page}.html'
+                    time.sleep(1)
+                    page, soup = open_new_page(page_link)
+
+                    global_zone_state = zone["state"]
+                    properties = extract_data(soup, page, page_link)
+
+                    if properties:
+                        scraper_service.process_scraped_items(properties)
+                        logger.info(f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved.")
+                    else:
+                        logger.warning(f"⚠️ Zone {zone['slug']}, Page {current_page}: no properties found.")
+
                     browser.close()
-                except:
-                    pass
-                continue
+                    time.sleep(3)
+
+                except Exception as e:
+                    logger.error(f"❌ Error processing zone {zone['slug']}, page {current_page}: {e}")
+                    try:
+                        browser.close()
+                    except:
+                        pass
+                    continue
 
     scraper_service.close()

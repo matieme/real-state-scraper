@@ -20,6 +20,7 @@ RETRIES = 3
 
 context = None
 config = None
+global_zone_state = ""
 
 
 def extract_property_id(url: str) -> str:
@@ -124,17 +125,15 @@ def parse_item(url, soup, page):
     expenses = None
     expenses_currency = None
 
-    # Default values for Argentina
-    country = "Argentina"
-    state = "Buenos Aires"
-    city = "Capital Federal"
-
     # Extract address and zone
     full_direction = get_meta_content('direccion').strip()
     parts = full_direction.split(',', 1)
+    location_parts = parts[1].strip().split(',') if len(parts) > 1 else []
     address = parts[0].strip() if parts else None
 
-    # Get zone from meta content
+    country = "Argentina"
+    state = global_zone_state
+    city = location_parts[-2].strip() if len(location_parts) >= 2 else None
     zone = get_meta_content('municipio')
 
     total_surface = extract_surface_value(get_meta_content('MT'))
@@ -279,37 +278,41 @@ def open_new_page(page_link, selector_to_wait):
 def run():
     global context
     global config
+    global global_zone_state
 
     config = load_config("scraper/configs/century21-config.json")
     scraper_service = ScraperService()
 
     with sync_playwright() as p:
-        for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping Century21"):
-            try:
-                browser = p.chromium.launch(headless=True)
-                context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
-
-                page_link = f'{config["BASE_URL"]}{config["LISTING_URL"].format(current_page)}'
-                time.sleep(1)
-                page, soup = open_new_page(page_link, 'a[href^="/propiedad/"]')
-
-                properties = extract_data(soup)
-
-                if properties:
-                    scraper_service.process_scraped_items(properties)
-                    logger.info(f"✅ Page {current_page}: {len(properties)} properties saved.")
-                else:
-                    logger.warning(f"⚠️ Page {current_page}: no properties found.")
-
-                browser.close()
-                time.sleep(3)
-
-            except Exception as e:
-                logger.error(f"❌ Error processing page {current_page}: {e}")
+        for zone in config["ZONES"]:
+            logger.info(f"Starting scraping for zone: {zone['slug']}")
+            for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping Century21"):
                 try:
+                    browser = p.chromium.launch(headless=True)
+                    context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
+
+                    page_link = f'{config["BASE_URL"]}{config["LISTING_URL"].format(current_page)}{zone["slug"]}'
+                    time.sleep(1)
+                    page, soup = open_new_page(page_link, 'a[href^="/propiedad/"]')
+                    global_zone_state = zone['state']
+
+                    properties = extract_data(soup)
+
+                    if properties:
+                        scraper_service.process_scraped_items(properties)
+                        logger.info(f"✅ Page {current_page}: {len(properties)} properties saved.")
+                    else:
+                        logger.warning(f"⚠️ Page {current_page}: no properties found.")
+
                     browser.close()
-                except:
-                    pass
-                continue
+                    time.sleep(3)
+
+                except Exception as e:
+                    logger.error(f"❌ Error processing page {current_page}: {e}")
+                    try:
+                        browser.close()
+                    except:
+                        pass
+                    continue
 
     scraper_service.close()

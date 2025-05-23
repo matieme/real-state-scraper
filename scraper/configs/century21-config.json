@@ -1,6 +1,15 @@
 ﻿{
   "BASE_URL": "https://century21.com.ar",
-  "LISTING_URL": "/v/resultados/tipo_casa-o-casa-duplex-o-cabana-o-departamento-o-penthouse-o-ph/operacion_venta/ordenado-por_reelevancia/pagina_{}/por_capital%20federal",
+  "LISTING_URL": "/v/resultados/tipo_casa-o-casa-duplex-o-cabana-o-departamento-o-penthouse-o-ph/operacion_venta/ordenado-por_reelevancia/pagina_{}/por_",
+  "ZONES": [
+    { "slug": "capital-federal", "state": "Buenos Aires" },
+    { "slug": "buenos-aires", "state": "Buenos Aires" },
+    { "slug": "gba-norte", "state": "Buenos Aires" },
+    { "slug": "gba-sur", "state": "Buenos Aires" },
+    { "slug": "cordoba", "state": "Córdoba" },
+    { "slug": "rosario", "state": "Santa Fe" },
+    { "slug": "mendoza", "state": "Mendoza" }
+  ],
   "HEADERS": {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
   }

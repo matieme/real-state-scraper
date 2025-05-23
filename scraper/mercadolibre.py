@@ -23,16 +23,17 @@ RETRIES = 3
 RESULTS_PER_PAGE = 48
 
 config = None
+global_zone_state = ""
 
 
-def build_page_url(page_number: int) -> str:
+def build_page_url(page_number: int, zone_slug: str) -> str:
     """
     Construye la URL de la página de resultados para MercadoLibre.
     """
     if page_number == 1:
-        return config["BASE_URL"] + "/"
+        return f"{config['BASE_URL']}{config['LISTING_URL']}{zone_slug}/"
     offset = 1 + (page_number - 1) * RESULTS_PER_PAGE
-    return f"{config['BASE_URL']}/_Desde_{offset}_NoIndex_True"
+    return f"{config['BASE_URL']}{config['LISTING_URL']}{zone_slug}/_Desde_{offset}_NoIndex_True"
 
 
 def open_new_page(page, url: str) -> BeautifulSoup:
@@ -159,14 +160,13 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
 
             # Default values for Argentina
             country = "Argentina"
-            state = "Buenos Aires"
-            city = "Capital Federal"
+            state = global_zone_state
+            city = parts[-2].strip() if len(parts) >= 1 else None
+            zone = parts[-3].strip() if len(parts) >= 2 else None
 
             # Extract address and zone
             if len(parts) >= 1:
                 address = parts[0]
-            if len(parts) >= 2:
-                zone = parts[1]
 
     # Extraer datos de la tabla de especificaciones
     specs = extract_specs_from_table(soup)
@@ -271,37 +271,43 @@ def extract_data_ml(soup: BeautifulSoup, page, page_link: str):
 
 def run():
     global config
+    global global_zone_state
+
     config = load_config("scraper/configs/mercadolibre-config.json")
     scraper_service = ScraperService()
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
-        page = context.new_page()
-        page.set_extra_http_headers(config["HEADERS"])
-
-        for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping Mercado Libre"):
-            try:
-                page_url = build_page_url(current_page)
-                soup = open_new_page(page, page_url)
-                properties = extract_data_ml(soup, page, page_url)
-
-                if properties:
-                    scraper_service.process_scraped_items(properties)
-                    logger.info(f"✅ Page {current_page}: {len(properties)} properties saved.")
-                else:
-                    logger.warning(f"⚠️ Page {current_page}: no properties found.")
-
-                time.sleep(2)
-
-            except Exception as e:
-                logger.error(f"❌ Error processing page {current_page}: {e}")
+        for zone in config["ZONES"]:
+            logger.info(f"Starting scraping for zone: {zone['slug']}")
+            for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES),
+                                     desc=f"Scraping Mercado Libre - {zone['slug']}"):
                 try:
-                    browser.close()
-                except:
-                    pass
-                continue
+                    browser = p.chromium.launch(headless=True)
+                    context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
+                    page = context.new_page()
+                    page.set_extra_http_headers(config["HEADERS"])
+
+                    page_url = build_page_url(current_page, zone["slug"])
+                    soup = open_new_page(page, page_url)
+                    global_zone_state = zone["state"]
+
+                    properties = extract_data_ml(soup, page, page_url)
+
+                    if properties:
+                        scraper_service.process_scraped_items(properties)
+                        logger.info(f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved.")
+                    else:
+                        logger.warning(f"⚠️ Zone {zone['slug']}, Page {current_page}: no properties found.")
+
+                    time.sleep(2)
+
+                except Exception as e:
+                    logger.error(f"❌ Error processing zone {zone['slug']}, page {current_page}: {e}")
+                    try:
+                        browser.close()
+                    except:
+                        pass
+                    continue
 
         browser.close()
         scraper_service.close()
-

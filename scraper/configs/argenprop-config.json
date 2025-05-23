@@ -1,5 +1,13 @@
 ﻿{
   "BASE_URL":"https://www.argenprop.com",
+  "LISTING_URL": "/departamentos/venta/",
+  "ZONES": [
+    { "slug": "capital-federal", "state": "Buenos Aires" },
+    { "slug": "buenos-aires", "state": "Buenos Aires" },
+    { "slug": "cordoba-arg", "state": "Córdoba" },
+    { "slug": "rosario-arg", "state": "Santa Fe" },
+    { "slug": "mendoza-arg", "state": "Mendoza" }
+  ],
   "HEADERS":{
     "authority":"www.argenprop.com",
     "accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",

@@ -1,5 +1,17 @@
 ﻿{
   "BASE_URL": "https://www.zonaprop.com.ar",
+  "LISTING_URL": "/inmuebles-venta-",
+  "ZONES": [
+    { "slug": "capital-federal", "state": "Buenos Aires" },
+    { "slug": "gba-norte", "state": "Buenos Aires" },
+    { "slug": "gba-sur", "state": "Buenos Aires" },
+    { "slug": "gba-oeste", "state": "Buenos Aires" },
+    { "slug": "buenos-aires-costa-atlantica", "state": "Buenos Aires" },
+    { "slug": "buenos-aires-fuera-de-gba", "state": "Buenos Aires" },
+    { "slug": "cordoba", "state": "Córdoba" },
+    { "slug": "santa-fe", "state": "Santa Fe" },
+    { "slug": "mendoza", "state": "Mendoza" }
+  ],
   "HEADERS":{
     "authority":"www.zonaprop.com.ar",
     "accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",

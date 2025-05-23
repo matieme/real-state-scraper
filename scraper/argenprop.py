@@ -21,6 +21,7 @@ RETRIES = 3
 
 context = None
 config = None
+global_zone_state = ""
 
 
 def extract_property_id(url: str) -> str:
@@ -87,8 +88,8 @@ def parse_item(url, soup):
 
     # Default values for Argentina
     country = "Argentina"
-    state = "Buenos Aires"
-    city = "Capital Federal"
+    state = global_zone_state
+    city = loc_text.split(',')[1].strip()
 
     # 6) features (rooms, baños, superficie…)
     features = main_div.select('ul.property-main-features > li')
@@ -253,36 +254,41 @@ def open_new_page(page_link):
 def run():
     global context
     global config
+    global global_zone_state
 
     config = load_config("scraper/configs/argenprop-config.json")
     scraper_service = ScraperService()
 
     with sync_playwright() as p:
-        for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping Argenprop"):
-            try:
-                browser = p.chromium.launch(headless=False)
-                context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
-
-                page_link = f'{config["BASE_URL"]}/departamentos/venta/capital-federal/pagina-{current_page}'
-                page, soup = open_new_page(page_link)
-
-                properties = extract_data(soup, page, page_link)
-
-                if properties:
-                    scraper_service.process_scraped_items(properties)
-                    logger.info(f"✅ Page {current_page}: {len(properties)} properties saved.")
-                else:
-                    logger.warning(f"⚠️ Page {current_page}: no properties found.")
-
-                browser.close()
-                time.sleep(3)
-
-            except Exception as e:
-                logger.error(f"❌ Error processing page {current_page}: {e}")
+        for zone in config["ZONES"]:
+            logger.info(f"Starting scraping for zone: {zone['slug']}")
+            for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES),
+                                     desc=f"Scraping Argenprop - {zone['slug']}"):
                 try:
-                    browser.close()
-                except:
-                    pass
-                continue
+                    browser = p.chromium.launch(headless=False)
+                    context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
 
-        scraper_service.close()
+                    page_link = f'{config["BASE_URL"]}{config["LISTING_URL"]}{zone["slug"]}/pagina-{current_page}'
+                    page, soup = open_new_page(page_link)
+                    global_zone_state = zone["state"]
+
+                    properties = extract_data(soup, page, page_link)
+
+                    if properties:
+                        scraper_service.process_scraped_items(properties)
+                        logger.info(f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved.")
+                    else:
+                        logger.warning(f"⚠️ Zone {zone['slug']}, Page {current_page}: no properties found.")
+
+                    browser.close()
+                    time.sleep(3)
+
+                except Exception as e:
+                    logger.error(f"❌ Error processing zone {zone['slug']}, page {current_page}: {e}")
+                    try:
+                        browser.close()
+                    except:
+                        pass
+                    continue
+
+    scraper_service.close()

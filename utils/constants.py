@@ -4,6 +4,7 @@
     SOURCE_NAME = "Source Name"
     SOURCE_IDENTIFIER = "SourceIdentifier"
     SCRAPE_DATE = "ScrapeDate"
+    IS_ACTIVE = "IsActive"
     PRICE_CURRENCY = "PriceCurrency"
     PRICE = "Price"
     EXPENSES_CURRENCY = "ExpensesCurrency"

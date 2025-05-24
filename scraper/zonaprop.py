@@ -154,6 +154,7 @@ def parse_item(url, div):
         latitude=latitude,
         longitude=longitude,
         location=location,
+        is_active=True
     )
     return item.to_dict()
 

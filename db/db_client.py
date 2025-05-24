@@ -42,11 +42,11 @@ class DBClient:
             if result:
                 property_id = result[0]
                 last_price = result[1]
-                
+
                 # Verificar si el precio cambió para guardar en historial
                 if last_price != prop.price:
                     self.insert_price_history(prop.source_identifier, prop.source_name, prop)
-                    
+
                     # Si el precio cambió, solo actualizamos los campos relacionados con el precio
                     self.cur.execute("""
                         UPDATE properties SET
@@ -95,8 +95,9 @@ class DBClient:
                         expenses,
                         expenses_currency,
                         sqr_price,
-                        scrape_date
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        scrape_date,
+                        is_active
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     prop.source_name,
@@ -125,10 +126,11 @@ class DBClient:
                     prop.expenses,
                     prop.expenses_currency,
                     prop.sqr_price,
-                    datetime.fromisoformat(prop.scrape_date.replace('Z', '+00:00'))
+                    datetime.fromisoformat(prop.scrape_date.replace('Z', '+00:00')),
+                    prop.is_active
                 ))
                 property_id = self.cur.fetchone()[0]
-                
+
                 # Para una nueva propiedad, también guardamos el primer registro en el historial
                 self.insert_price_history(prop.source_identifier, prop.source_name, prop)
 

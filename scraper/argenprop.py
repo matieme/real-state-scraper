@@ -156,7 +156,8 @@ def parse_item(url, soup):
         latitude=latitude,
         longitude=longitude,
         location=location,
-        amenities=amenities
+        amenities=amenities,
+        is_active=True
     )
     return item.to_dict()
 

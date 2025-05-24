@@ -243,6 +243,7 @@ def parse_item_ml(url: str, soup: BeautifulSoup) -> dict:
         latitude=latitude,
         longitude=longitude,
         location=location,
+        is_active=True
     )
     return item.to_dict()
 

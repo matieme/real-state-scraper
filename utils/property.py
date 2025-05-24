@@ -5,7 +5,7 @@ class Property:
     def __init__(self, url="", source_name=None, price_currency=None, price=None, expenses_currency=None, expenses=None,
                  sqr_price=None, country=None, state=None, city=None, zone=None, address=None, total_surface=None,
                  covered_surface=None, rooms=None, bedrooms=None, bathrooms=None, garages=None, amenities=None, age=None, layout=None,
-                 orientation=None, latitude=None, longitude=None, location=None, source_identifier=None, scrape_date=None):
+                 orientation=None, latitude=None, longitude=None, location=None, source_identifier=None, scrape_date=None, is_active=True):
         """
         Identification of the property
         """
@@ -13,6 +13,7 @@ class Property:
         self.source_identifier = source_identifier
         self.url = url
         self.scrape_date = scrape_date or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.is_active = is_active
         """
         Offer of the property
         """
@@ -56,6 +57,7 @@ class Property:
             Constants.SOURCE_NAME: self.source_name,
             Constants.SOURCE_IDENTIFIER: self.source_identifier,
             Constants.SCRAPE_DATE: self.scrape_date,
+            Constants.IS_ACTIVE: self.is_active,
 
             # Offer of the property
             Constants.PRICE_CURRENCY: self.price_currency,
@@ -97,6 +99,7 @@ class Property:
             Constants.SOURCE_NAME: 'source_name',
             Constants.SOURCE_IDENTIFIER: 'source_identifier',
             Constants.SCRAPE_DATE: 'scrape_date',
+            Constants.IS_ACTIVE: 'is_active',
             Constants.PRICE_CURRENCY: 'price_currency',
             Constants.PRICE: 'price',
             Constants.EXPENSES_CURRENCY: 'expenses_currency',

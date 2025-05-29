@@ -30,10 +30,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar las dependencias de Playwright antes del navegador
-RUN pip install --no-cache-dir playwright
-
-# Instalar navegadores y dependencias de Playwright
-RUN playwright install-deps && playwright install chromium
+RUN pip install --no-cache-dir playwright && playwright install chromium --with-deps
 
 # Copiar archivos del proyecto
 COPY requirements.txt ./

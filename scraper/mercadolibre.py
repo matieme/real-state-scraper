@@ -262,7 +262,7 @@ def extract_data_ml(soup: BeautifulSoup, page, page_link: str):
         try:
             link = tag.find('a', href=True)['href']
             child_soup = open_new_page(page, link)
-            time.sleep(1)
+            time.sleep(2)
             item_dict = parse_item_ml(link, child_soup)
             prop = Property.from_dict(item_dict)
             results.append(prop)

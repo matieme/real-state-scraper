@@ -29,10 +29,13 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar Playwright y Chromium correctamente
-RUN pip install --no-cache-dir playwright && \
-    python -m playwright install chromium
+# Setea la ruta de navegadores de Playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
+# Instalar Playwright y Chromium correctamente en esa ruta
+RUN mkdir -p /ms-playwright && \
+    pip install --no-cache-dir playwright && \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright python -m playwright install chromium
 
 # Copiar archivos del proyecto
 COPY requirements.txt ./
@@ -43,7 +46,7 @@ COPY . .
 # Crear carpeta de resultados si aún se usa
 RUN mkdir -p results
 
-# Variables de entorno
+# Variables de entorno de ejecución
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 

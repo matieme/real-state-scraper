@@ -1,7 +1,0 @@
-{
-    "host": "localhost",
-    "database": "scrapped_properties_db",
-    "user": "postgres",
-    "password": "kenshin",
-    "port": 5432
-} 

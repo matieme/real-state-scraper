@@ -2,8 +2,9 @@ import logging
 from typing import List
 from db.db_client import DBClient
 from utils.property import Property
-from utils.configloader import load_config
 import psycopg2
+import os
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
@@ -11,18 +12,18 @@ logger = logging.getLogger(__name__)
 class ScraperService:
     def __init__(self):
         """Initializes the scraping service with a live DB connection."""
-        self.db_config = load_config("scraper/configs/database-config.json")
+        load_dotenv()  # Load environment variables from .env file
         self.db = None
         self._connect_db()
 
     def _connect_db(self):
         """Creates a new DBClient connection."""
         self.db = DBClient(
-            host=self.db_config["host"],
-            database=self.db_config["database"],
-            user=self.db_config["user"],
-            password=self.db_config["password"],
-            port=self.db_config.get("port", 5432)
+            host=os.getenv('DB_HOST'),
+            database=os.getenv('DB_DATABASE'),
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASSWORD'),
+            port=int(os.getenv('DB_PORT', 5432))
         )
 
     def _ensure_connection(self):

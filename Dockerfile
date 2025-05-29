@@ -29,8 +29,10 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar las dependencias de Playwright antes del navegador
-RUN pip install --no-cache-dir playwright && playwright install chromium --with-deps
+# Instalar Playwright y Chromium correctamente
+RUN pip install --no-cache-dir playwright && \
+    python -m playwright install chromium
+
 
 # Copiar archivos del proyecto
 COPY requirements.txt ./

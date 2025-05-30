@@ -44,7 +44,7 @@ def extract_rooms_from_icons(soup):
         return rooms
     except Exception as e:
         logger.warning(f"Could not extract rooms: {e}")
-        return 1  # default
+        return 1
 
 
 def extract_age_from_icons(soup):
@@ -207,7 +207,6 @@ def extract_lat_lon_via_click(page):
 
         popup = popup_info.value
         url = popup.url
-        logger.info(f"Popup URL captured: {url}")
         popup.close()
 
         match = re.search(r'daddr=([-\d\.]+),([-\d\.]+)', url)
@@ -241,14 +240,15 @@ def extract_data(soup):
             property_links.add(href)
 
     for href in property_links:
+        url = f'{config["BASE_URL"]}{href}'
         try:
-            url = f'{config["BASE_URL"]}{href}'
             soup, page = get_child_item_data(href)
             item_dict = parse_item(url, soup, page)
             prop = Property.from_dict(item_dict)
             results.append(prop)
+            logger.info(f"Save property: {config['BASE_URL'] + url}")
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Error parsing item at {config['BASE_URL'] + url}: {e}")
 
     return results
 
@@ -266,7 +266,8 @@ def open_new_page(page_link, selector_to_wait):
 
     page.set_extra_http_headers(config["HEADERS"])
 
-    logger.info(f"Opening {page_link}")
+    logger.info("")
+    logger.info(f"Opening page: {page_link}")
     try:
         page.goto(page_link)
     except:
@@ -283,13 +284,15 @@ def run():
     global config
     global global_zone_state
 
+    logger.info("==== Century21 Scraper Started ====")
     config = load_config("scraper/configs/century21-config.json")
     scraper_service = ScraperService()
 
     with sync_playwright() as p:
         for zone in config["ZONES"]:
             logger.info(f"Starting scraping for zone: {zone['slug']}")
-            for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES), desc="Scraping Century21"):
+            for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES),
+                                     desc=f"Scraping Century21 - {zone['slug']}"):
                 try:
                     browser = p.chromium.launch(headless=True)
                     context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
@@ -303,15 +306,14 @@ def run():
 
                     if properties:
                         scraper_service.process_scraped_items(properties)
-                        logger.info(f"✅ Page {current_page}: {len(properties)} properties saved.")
+                        logger.info(f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved successfully.")
                     else:
-                        logger.warning(f"⚠️ Page {current_page}: no properties found.")
-
+                        logger.warning(f"⚠️ Zone {zone['slug']}, Page {current_page}: no properties found.")
                     browser.close()
                     time.sleep(3)
 
                 except Exception as e:
-                    logger.error(f"❌ Error processing page {current_page}: {e}")
+                    logger.error(f"❌ Error processing zone {zone['slug']}, page {current_page}: {e}")
                     try:
                         browser.close()
                     except:
@@ -319,3 +321,4 @@ def run():
                     continue
 
     scraper_service.close()
+    logger.info("==== Century21 Scraper Finished ====")

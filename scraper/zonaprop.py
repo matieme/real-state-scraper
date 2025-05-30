@@ -201,17 +201,17 @@ def extract_coordinates_from_map(soup):
 def extract_data(soup, page, page_link):
     container_div = soup.find('div', class_='postingsList-module__postings-container')
 
-    for _ in range(RETRIES):
+    for attempt in range(RETRIES):
         if container_div:
             break
-        logger.warning("No postings-container found in the page. Retrying...")
+        logger.warning(f"Attempt {attempt}: postings-container not found. Retrying...")
         time.sleep(5)
         page.goto(page_link)
         soup = BeautifulSoup(page.content(), 'lxml')
         container_div = soup.find('div', class_='postingsList-module__postings-container')
 
     if not container_div:
-        logger.warning("Failed to find postings-container after retries.")
+        logger.error(f"Failed to load postings container after {RETRIES} retries for {page_link}")
         return []
 
     results = []
@@ -228,12 +228,12 @@ def extract_data(soup, page, page_link):
             try:
                 item_container = future.result()
                 if item_container:
-                    logger.info(url)
                     item_dict = parse_item(url, item_container)
                     prop = Property.from_dict(item_dict)
                     results.append(prop)
+                    logger.info(f"Save property: {config['BASE_URL'] + url}")
             except Exception as e:
-                logger.error(e)
+                logger.error(f"Error parsing item at {config['BASE_URL'] + url}: {e}")
 
     return results
 
@@ -265,7 +265,7 @@ async def get_child_item_data(url):
                 container_div_item.longitude = longitude
 
         except Exception as e:
-            logger.error(f"Failed to load {new_page_link_item}: {e}")
+            logger.error(f"Failed to load {new_page_link_item}: {e.name}")
         finally:
             await browser.close()
 
@@ -278,12 +278,13 @@ def open_new_page(page_link):
 
     page.set_extra_http_headers(config["HEADERS"])
 
-    logger.info(f"Opening {page_link}")
+    logger.info("")
+    logger.info(f"Opening page: {page_link}")
     try:
         page.goto(page_link)
         page.wait_for_selector(".postingsList-module__postings-container", timeout=30000)
     except Exception as e:
-        logger.warning(f"No main container found: {e}")
+        logger.warning(f"Main container missing on page {page_link}: {e}")
     html = page.content()
     soup = BeautifulSoup(html, 'lxml')
     return page, soup
@@ -303,6 +304,7 @@ def run():
     global config
     global global_zone_state
 
+    logger.info("==== Zonaprop Scraper Started ====")
     config = load_config("scraper/configs/zonaprop-config.json")
     scraper_service = ScraperService()
 
@@ -324,7 +326,7 @@ def run():
 
                     if properties:
                         scraper_service.process_scraped_items(properties)
-                        logger.info(f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved.")
+                        logger.info(f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved successfully.")
                     else:
                         logger.warning(f"⚠️ Zone {zone['slug']}, Page {current_page}: no properties found.")
 
@@ -340,3 +342,4 @@ def run():
                     continue
 
     scraper_service.close()
+    logger.info("==== Zonaprop Scraper Finished ====")

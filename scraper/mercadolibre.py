@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger()
 
 START_PAGE = 1
-MAX_PAGES = 3
+MAX_PAGES = 1
 RETRIES = 3
 RESULTS_PER_PAGE = 48
 
@@ -40,7 +40,7 @@ def open_new_page(page, url: str) -> BeautifulSoup:
     """
     Abre una URL en Playwright y retorna el Soup.
     """
-    logger.info(f"Opening {url}")
+    logger.info(f"Opening page: {url}")
     try:
         page.goto(url)
     except Exception:
@@ -254,7 +254,7 @@ def extract_data_ml(soup: BeautifulSoup, page, page_link: str):
     """
     container = soup.find('ol', class_='ui-search-layout')
     if not container:
-        logger.warning("No property listing found.")
+        logger.warning(f"No property listing found on page {page_link}")
         return pd.DataFrame()
 
     results = []
@@ -266,8 +266,9 @@ def extract_data_ml(soup: BeautifulSoup, page, page_link: str):
             item_dict = parse_item_ml(link, child_soup)
             prop = Property.from_dict(item_dict)
             results.append(prop)
+            logger.info(f"Save property: {link}")
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Error parsing item at {link}: {e}")
 
     return results
 
@@ -276,6 +277,7 @@ def run():
     global config
     global global_zone_state
 
+    logger.info("==== MercadoLibre Scraper Started ====")
     config = load_config("scraper/configs/mercadolibre-config.json")
     scraper_service = ScraperService()
 
@@ -298,7 +300,7 @@ def run():
 
                     if properties:
                         scraper_service.process_scraped_items(properties)
-                        logger.info(f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved.")
+                        logger.info(f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved successfully.")
                     else:
                         logger.warning(f"⚠️ Zone {zone['slug']}, Page {current_page}: no properties found.")
 
@@ -314,3 +316,4 @@ def run():
 
         browser.close()
         scraper_service.close()
+        logger.info("==== MercadoLibre Scraper Finished ====")

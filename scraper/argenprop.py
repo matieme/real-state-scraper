@@ -189,31 +189,42 @@ def extract_numbers(text):
 def extract_data(soup, page, page_link):
     container_div = soup.find('div', class_='listing__items')
 
-    for _ in range(RETRIES):
+    for attempt in range(RETRIES):
         if container_div:
             break
-        logger.warning("No postings-container found in the page. Retrying...")
+        logger.warning(f"Attempt {attempt}: postings-container not found. Retrying...")
         time.sleep(5)
         page.goto(page_link)
         soup = BeautifulSoup(page.content(), 'lxml')
         container_div = soup.find('div', class_='listing__items')
 
     if not container_div:
-        logger.warning("Failed to find postings-container after retries.")
+        logger.error(f"Failed to load postings container after {RETRIES} retries for {page_link}")
         return pd.DataFrame()
 
     results = []
 
     for i, tag in enumerate(container_div.contents):
         try:
-            if tag:
-                url = tag.find('a')['href']
+            if not tag:
+                continue
+            link = tag.find('a')
+            if not link or not link.get('href'):
+                continue
+
+            url = link['href']
+            full_url = config['BASE_URL'] + url
+
+            try:
                 item_dict = parse_item(url, get_child_item_data(url))
                 prop = Property.from_dict(item_dict)
                 results.append(prop)
-        except Exception as e:
-            logger.error(e)
-            pass
+                logger.info(f"Save property: {full_url}")
+            except Exception as e:
+                logger.error(f"Error parsing item at {full_url}: {e}")
+                continue
+        except:
+            continue
 
     return results
 
@@ -244,7 +255,8 @@ def open_new_page(page_link):
 
     page.set_extra_http_headers(config["HEADERS"])
 
-    logger.info(f"Opening {page_link}")
+    logger.info("")
+    logger.info(f"Opening page: {page_link}")
     try:
         page.goto(page_link)
     except:
@@ -259,6 +271,7 @@ def run():
     global config
     global global_zone_state
 
+    logger.info("==== Argenprop Scraper Started ====")
     config = load_config("scraper/configs/argenprop-config.json")
     scraper_service = ScraperService()
 
@@ -279,7 +292,8 @@ def run():
 
                     if properties:
                         scraper_service.process_scraped_items(properties)
-                        logger.info(f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved.")
+                        logger.info(
+                            f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved successfully.")
                     else:
                         logger.warning(f"⚠️ Zone {zone['slug']}, Page {current_page}: no properties found.")
 
@@ -295,3 +309,4 @@ def run():
                     continue
 
     scraper_service.close()
+    logger.info("==== Argenprop Scraper Finished ====")

@@ -1,5 +1,6 @@
 beautifulsoup4==4.12.2
-playwright==1.38.0
+#Playwright instalation via Dockerfile
+#playwright==1.38.0
 numpy==1.26.0 
 pandas==2.1.1
 lxml==4.9.3

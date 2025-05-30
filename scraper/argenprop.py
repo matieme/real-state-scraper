@@ -268,7 +268,7 @@ def run():
             for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES),
                                      desc=f"Scraping Argenprop - {zone['slug']}"):
                 try:
-                    browser = p.chromium.launch(headless=False)
+                    browser = p.chromium.launch(headless=True)
                     context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
 
                     page_link = f'{config["BASE_URL"]}{config["LISTING_URL"]}{zone["slug"]}/pagina-{current_page}'

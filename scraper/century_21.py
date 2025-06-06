@@ -293,31 +293,28 @@ def run():
             logger.info(f"Starting scraping for zone: {zone['slug']}")
             for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES),
                                      desc=f"Scraping Century21 - {zone['slug']}"):
+                page_link = f'{config["BASE_URL"]}{config["LISTING_URL"].format(current_page)}{zone["slug"]}'
+                time.sleep(1)
                 try:
-                    browser = p.chromium.launch(headless=True)
-                    context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
+                    with p.chromium.launch(headless=True) as browser:
+                        with browser.new_context(user_agent=config["HEADERS"]["user-agent"]) as context:
+                            page, soup = open_new_page(page_link, 'a[href^="/propiedad/"]')
+                            global_zone_state = zone['state']
 
-                    page_link = f'{config["BASE_URL"]}{config["LISTING_URL"].format(current_page)}{zone["slug"]}'
-                    time.sleep(1)
-                    page, soup = open_new_page(page_link, 'a[href^="/propiedad/"]')
-                    global_zone_state = zone['state']
+                            properties = extract_data(soup)
 
-                    properties = extract_data(soup)
-
-                    if properties:
-                        scraper_service.process_scraped_items(properties)
-                        logger.info(f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved successfully.")
-                    else:
-                        logger.warning(f"⚠️ Zone {zone['slug']}, Page {current_page}: no properties found.")
-                    browser.close()
-                    time.sleep(3)
+                            if properties:
+                                scraper_service.process_scraped_items(properties)
+                                logger.info(
+                                    f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved successfully.")
+                            else:
+                                logger.warning(
+                                    f"⚠️ Zone {zone['slug']}, Page {current_page}: no properties found.")
+                            time.sleep(3)
 
                 except Exception as e:
-                    logger.error(f"❌ Error processing zone {zone['slug']}, page {current_page}: {e}")
-                    try:
-                        browser.close()
-                    except:
-                        pass
+                    logger.error(
+                        f"❌ Error processing zone {zone['slug']}, page {current_page}: {e}")
                     continue
 
     scraper_service.close()

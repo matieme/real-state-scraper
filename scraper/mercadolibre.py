@@ -286,34 +286,33 @@ def run():
             logger.info(f"Starting scraping for zone: {zone['slug']}")
             for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES),
                                      desc=f"Scraping Mercado Libre - {zone['slug']}"):
+                page_url = build_page_url(current_page, zone["slug"])
                 try:
-                    browser = p.chromium.launch(headless=True)
-                    context = browser.new_context(user_agent=config["HEADERS"]["user-agent"])
-                    page = context.new_page()
-                    page.set_extra_http_headers(config["HEADERS"])
+                    with p.chromium.launch(headless=True) as browser:
+                        with browser.new_context(user_agent=config["HEADERS"]["user-agent"]) as context:
+                            page = context.new_page()
+                            page.set_extra_http_headers(config["HEADERS"])
 
-                    page_url = build_page_url(current_page, zone["slug"])
-                    soup = open_new_page(page, page_url)
-                    global_zone_state = zone["state"]
+                            soup = open_new_page(page, page_url)
+                            global_zone_state = zone["state"]
 
-                    properties = extract_data_ml(soup, page, page_url)
+                            properties = extract_data_ml(soup, page, page_url)
 
-                    if properties:
-                        scraper_service.process_scraped_items(properties)
-                        logger.info(f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved successfully.")
-                    else:
-                        logger.warning(f"⚠️ Zone {zone['slug']}, Page {current_page}: no properties found.")
+                            if properties:
+                                scraper_service.process_scraped_items(properties)
+                                logger.info(
+                                    f"✅ Zone {zone['slug']}, Page {current_page}: {len(properties)} properties saved successfully.")
+                            else:
+                                logger.warning(
+                                    f"⚠️ Zone {zone['slug']}, Page {current_page}: no properties found.")
 
-                    time.sleep(2)
+                            time.sleep(2)
 
                 except Exception as e:
-                    logger.error(f"❌ Error processing zone {zone['slug']}, page {current_page}: {e}")
-                    try:
-                        browser.close()
-                    except:
-                        pass
+                    logger.error(
+                        f"❌ Error processing zone {zone['slug']}, page {current_page}: {e}")
                     continue
 
-        browser.close()
-        scraper_service.close()
-        logger.info("==== MercadoLibre Scraper Finished ====")
+    scraper_service.close()
+    logger.info("==== MercadoLibre Scraper Finished ====")
+

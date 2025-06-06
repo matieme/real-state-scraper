@@ -17,11 +17,6 @@ from services.scraper_service import ScraperService
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
-START_PAGE = 1
-MAX_PAGES = 1
-RETRIES = 3
-RESULTS_PER_PAGE = 48
-
 config = None
 global_zone_state = ""
 
@@ -32,7 +27,7 @@ def build_page_url(page_number: int, zone_slug: str) -> str:
     """
     if page_number == 1:
         return f"{config['BASE_URL']}{config['LISTING_URL']}{zone_slug}/"
-    offset = 1 + (page_number - 1) * RESULTS_PER_PAGE
+    offset = 1 + (page_number - 1) * config["RESULTS_PER_PAGE"]
     return f"{config['BASE_URL']}{config['LISTING_URL']}{zone_slug}/_Desde_{offset}_NoIndex_True"
 
 
@@ -284,7 +279,7 @@ def run():
     with sync_playwright() as p:
         for zone in config["ZONES"]:
             logger.info(f"Starting scraping for zone: {zone['slug']}")
-            for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES),
+            for current_page in tqdm(range(config["START_PAGE"], config["START_PAGE"] + config["MAX_PAGES"]),
                                      desc=f"Scraping Mercado Libre - {zone['slug']}"):
                 page_url = build_page_url(current_page, zone["slug"])
                 try:

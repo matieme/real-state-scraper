@@ -15,10 +15,6 @@ from services.scraper_service import ScraperService
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
-START_PAGE = 1
-MAX_PAGES = 3
-RETRIES = 3
-
 context = None
 config = None
 global_zone_state = ""
@@ -189,7 +185,7 @@ def extract_numbers(text):
 def extract_data(soup, page, page_link):
     container_div = soup.find('div', class_='listing__items')
 
-    for attempt in range(RETRIES):
+    for attempt in range(config["RETRIES"]):
         if container_div:
             break
         logger.warning(f"Attempt {attempt}: postings-container not found. Retrying...")
@@ -199,7 +195,7 @@ def extract_data(soup, page, page_link):
         container_div = soup.find('div', class_='listing__items')
 
     if not container_div:
-        logger.error(f"Failed to load postings container after {RETRIES} retries for {page_link}")
+        logger.error(f"Failed to load postings container after {config['RETRIES']} retries for {page_link}")
         return pd.DataFrame()
 
     results = []
@@ -278,7 +274,7 @@ def run():
     with sync_playwright() as p:
         for zone in config["ZONES"]:
             logger.info(f"Starting scraping for zone: {zone['slug']}")
-            for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES),
+            for current_page in tqdm(range(config["START_PAGE"], config["START_PAGE"] + config["MAX_PAGES"]),
                                      desc=f"Scraping Argenprop - {zone['slug']}"):
                 page_link = f'{config["BASE_URL"]}{config["LISTING_URL"]}{zone["slug"]}/pagina-{current_page}'
                 try:

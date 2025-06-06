@@ -1,6 +1,9 @@
 ﻿{
   "BASE_URL": "https://www.zonaprop.com.ar",
   "LISTING_URL": "/inmuebles-venta-",
+  "START_PAGE": 1,
+  "MAX_PAGES": 1,
+  "RETRIES": 3,
   "ZONES": [
     { "slug": "capital-federal", "state": "Buenos Aires" },
     { "slug": "gba-norte", "state": "Buenos Aires" },

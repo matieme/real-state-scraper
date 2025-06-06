@@ -1,6 +1,10 @@
 {
   "BASE_URL": "https://inmuebles.mercadolibre.com.ar",
   "LISTING_URL": "/venta/propiedades-individuales/",
+  "START_PAGE": 1,
+  "MAX_PAGES": 1,
+  "RETRIES": 3,
+  "RESULTS_PER_PAGE": 48,
   "ZONES": [
     { "slug": "capital-federal", "state": "Buenos Aires" },
     { "slug": "gba-norte", "state": "Buenos Aires" },

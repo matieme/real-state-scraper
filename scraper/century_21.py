@@ -14,10 +14,6 @@ from services.scraper_service import ScraperService
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
-START_PAGE = 1
-MAX_PAGES = 3
-RETRIES = 3
-
 context = None
 config = None
 global_zone_state = ""
@@ -291,7 +287,7 @@ def run():
     with sync_playwright() as p:
         for zone in config["ZONES"]:
             logger.info(f"Starting scraping for zone: {zone['slug']}")
-            for current_page in tqdm(range(START_PAGE, START_PAGE + MAX_PAGES),
+            for current_page in tqdm(range(config["START_PAGE"], config["START_PAGE"] + config["MAX_PAGES"]),
                                      desc=f"Scraping Century21 - {zone['slug']}"):
                 page_link = f'{config["BASE_URL"]}{config["LISTING_URL"].format(current_page)}{zone["slug"]}'
                 time.sleep(1)
